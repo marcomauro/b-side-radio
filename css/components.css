@@ -278,6 +278,9 @@
   justify-content: center;
   transition: all 0.12s ease;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .secondary-btn:active {
@@ -292,6 +295,23 @@
 
 .secondary-btn.active {
   color: var(--accent);
+}
+
+/* Continuous shuffle mode: accent color + gentle pulse */
+.secondary-btn.shuffle-on {
+  color: var(--accent);
+  animation: shufflePulse 2s ease-in-out infinite;
+}
+
+@keyframes shufflePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .secondary-btn.shuffle-on {
+    animation: none;
+  }
 }
 
 .sleep-countdown {

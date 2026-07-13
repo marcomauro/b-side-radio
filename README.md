@@ -16,8 +16,9 @@ A Progressive Web App (PWA) to listen to the **B-SIDE** podcast by Alessio Berta
 - Toast notifications for playback errors
 
 ### Random Episode
-- One tap picks a random weekday episode (Sep 1, 2025 – Jun 26, 2026, weekends excluded)
-- Also picks a random quarter of the show (1-4) and starts streaming from there
+- Short tap picks a random weekday episode (Sep 1, 2025 – Jun 26, 2026, weekends excluded), a random quarter of the show (1-4), and starts streaming from there
+- **Continuous shuffle**: long-press the shuffle button to toggle an endless, radio-like mode — when the current quarter finishes it automatically jumps to a new random episode + part. A short tap while active skips to the next one immediately
+- Continuous mode turns off on long-press again, or when you manually pick an episode
 - Date range configured in `js/config.js`
 
 ### Favorites
