@@ -22,7 +22,7 @@ export function savePositionToStorage(dateValue) {
     localStorage.setItem(key, JSON.stringify(data));
     Engine.position.lastSaved = Engine.position.current;
   } catch (e) {
-    // Storage pieno o non disponibile (es. private mode)
+    // Storage full or unavailable (e.g. private mode)
   }
 }
 
@@ -93,7 +93,7 @@ export function setFavorites(favorites) {
   try {
     localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites));
   } catch (e) {
-    // Storage pieno o non disponibile (es. private mode)
+    // Storage full or unavailable (e.g. private mode)
   }
 }
 
@@ -113,6 +113,6 @@ export function setTheme(theme) {
   try {
     localStorage.setItem(STORAGE_KEYS.THEME, theme);
   } catch (e) {
-    // Storage pieno o non disponibile (es. private mode)
+    // Storage full or unavailable (e.g. private mode)
   }
 }

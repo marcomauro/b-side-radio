@@ -2,7 +2,7 @@
 // B-SIDE Service Worker v1.0
 // ============================================
 
-const CACHE_NAME = 'bside-cache-v6';
+const CACHE_NAME = 'bside-cache-v7';
 
 // Asset statici da cachare all'installazione
 const STATIC_ASSETS = [
@@ -89,7 +89,7 @@ self.addEventListener('activate', (event) => {
 // FETCH - Strategia di caching
 // ============================================
 self.addEventListener('fetch', (event) => {
-  // Solo le GET sono cachabili
+  // Only GET requests are cacheable
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
@@ -112,7 +112,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // === CROSS-ORIGIN: passa dalla rete senza cachare ===
+  // === CROSS-ORIGIN: go to the network without caching ===
   if (url.origin !== self.location.origin) return;
 
   // === ASSET STATICI: Stale While Revalidate ===
@@ -136,7 +136,7 @@ self.addEventListener('fetch', (event) => {
           .catch((err) => {
             console.log('[SW] Fetch failed, serving cached:', err);
             if (cached) return cached;
-            // Fallback offline per le navigazioni: serve la app-shell
+            // Offline fallback for navigations: serve the app shell
             if (event.request.mode === 'navigate') {
               return caches.match('./index.html');
             }

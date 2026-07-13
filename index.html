@@ -13,10 +13,10 @@
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   <link rel="apple-touch-icon" href="icon-192.png">
 
-  <!-- Anticipa DNS+TLS verso il server audio (senza crossorigin: l'elemento audio usa richieste no-cors) -->
+  <!-- Warm up DNS+TLS towards the audio server (no crossorigin: the audio element uses no-cors requests) -->
   <link rel="preconnect" href="https://media.capital.it">
 
-  <!-- Applica il tema salvato prima del primo paint per evitare il flash del tema chiaro -->
+  <!-- Apply the saved theme before first paint to avoid a light-theme flash -->
   <script>
     try {
       if (localStorage.getItem('bside-theme') === 'dark') {

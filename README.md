@@ -10,8 +10,10 @@ A Progressive Web App (PWA) to listen to the **B-SIDE** podcast by Alessio Berta
 - Stream episodes by date
 - Playback controls: play/pause, -30s, +30s
 - Quick navigation between days with ◀ ▶ arrows
+- Episode segments: jump to each quarter with the 1-2-3-4 buttons
 - Progress bar with elapsed and remaining time
 - Volume control with mute/unmute
+- Toast notifications for playback errors
 
 ### Favorites
 - Save favorite episodes
@@ -32,14 +34,14 @@ A Progressive Web App (PWA) to listen to the **B-SIDE** podcast by Alessio Berta
 
 ### PWA
 - Installable on Android, iOS, and desktop
-- Works offline (interface)
+- Works offline (interface, with offline navigation fallback)
 - Lockscreen and notification controls
 - Bluetooth headphones compatible
 - Custom home screen icon
 
 ### Theme
 - Light and dark mode
-- Preference saved automatically
+- Preference saved automatically and applied before first paint (no flash on load)
 - System theme color adaptation
 
 ## Installation
@@ -86,17 +88,26 @@ bside-player/
     ├── favorites.js    # Favorites system
     ├── sleep.js        # Sleep timer
     ├── mediasession.js # Media Session API (lockscreen)
-    ├── install.js      # PWA installation
+    ├── install.js      # PWA installation and Service Worker registration
+    ├── info.js         # Info popup (version, credits)
+    ├── toast.js        # Toast notifications
     └── app.js          # App initialization
 ```
 
 ## Technologies
 
-- HTML5 / CSS3 / JavaScript (ES6 Modules)
+- HTML5 / CSS3 / JavaScript (ES6 Modules) — no build step, no external dependencies, system font stack
 - Media Session API (lockscreen controls)
 - Service Worker (cache and installation)
 - Web App Manifest (PWA)
-- Connection API (network quality detection)
+- Connection API (network quality detection, where supported)
+
+### Service Worker caching strategies
+
+- **Audio streams**: network-only, never cached (returns a controlled 503 when offline)
+- **Static assets** (HTML, CSS, JS, icons): stale-while-revalidate, same-origin GET requests only
+- **Navigation requests**: fall back to the cached `index.html` app shell when offline
+- Cache is versioned via `CACHE_NAME` in `sw.js`: bump it whenever a static asset changes, otherwise users keep receiving stale files
 
 ## Local Development
 
@@ -111,6 +122,13 @@ ruby -run -ehttpd . -p8000
 ```
 
 Then open `http://localhost:8000`
+
+There are no automated tests: verify changes manually in the browser (playback, seeking, day navigation, offline behavior, PWA install).
+
+## Conventions
+
+- Code comments and documentation are written in English
+- App version lives in `js/config.js` (`APP_VERSION`)
 
 ## Author
 
