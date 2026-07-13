@@ -12,3 +12,7 @@ export const STORAGE_KEYS = {
   POSITION_PREFIX: 'bside-pos-'
 };
 export const POSITION_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 giorni in ms
+
+// Date range for the "random episode" feature (weekends excluded: the show airs Mon-Fri)
+export const RANDOM_RANGE_START = '2025-09-01';
+export const RANDOM_RANGE_END = '2026-06-26';

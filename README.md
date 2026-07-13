@@ -15,6 +15,11 @@ A Progressive Web App (PWA) to listen to the **B-SIDE** podcast by Alessio Berta
 - Volume control with mute/unmute
 - Toast notifications for playback errors
 
+### Random Episode
+- One tap picks a random weekday episode (Sep 1, 2025 – Jun 26, 2026, weekends excluded)
+- Also picks a random quarter of the show (1-4) and starts streaming from there
+- Date range configured in `js/config.js`
+
 ### Favorites
 - Save favorite episodes
 - Quick access from favorites list
@@ -87,6 +92,7 @@ bside-player/
     ├── theme.js        # Theme management
     ├── favorites.js    # Favorites system
     ├── sleep.js        # Sleep timer
+    ├── random.js       # Random episode playback
     ├── mediasession.js # Media Session API (lockscreen)
     ├── install.js      # PWA installation and Service Worker registration
     ├── info.js         # Info popup (version, credits)

@@ -37,13 +37,14 @@
   width: 100%;
   max-width: 280px;
   aspect-ratio: 1;
-  background: linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%);
-  border-radius: 20px;
+  background: linear-gradient(145deg, #232447 0%, #1a1b38 50%, #101124 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 40px rgba(20, 20, 60, 0.35);
 }
 
 .artwork-title {
@@ -99,11 +100,12 @@
   transform: translateY(-50%);
   width: 14px;
   height: 14px;
-  background: var(--text-primary);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.15s ease;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
 }
 
 .progress-bar:active .progress-thumb,
@@ -123,8 +125,8 @@
 .segment-btn {
   width: 36px;
   height: 36px;
-  border: none;
-  background: transparent;
+  border: 1px solid transparent;
+  background: var(--control-glass);
   color: var(--text-secondary);
   border-radius: 50%;
   cursor: pointer;
@@ -142,8 +144,9 @@
 }
 
 .segment-btn.active {
-  color: var(--text-primary);
-  background: var(--control-hover);
+  color: var(--accent);
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border);
 }
 
 /* Control Buttons */
@@ -192,17 +195,17 @@
 .play-btn {
   width: 72px;
   height: 72px;
-  background: var(--text-primary);
-  color: var(--bg-main);
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  box-shadow: var(--shadow);
 }
 
 .play-btn svg {
   width: 32px;
   height: 32px;
-}
-
-[data-theme="dark"] .play-btn {
-  color: #000;
 }
 
 /* Date Navigation */
@@ -316,11 +319,11 @@
 .popup-content {
   width: 100%;
   max-width: 500px;
-  background: var(--player-bg);
+  background: var(--glass-bg-strong);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border-radius: 16px 16px 0 0;
-  border: 1px solid var(--player-border);
+  border: 1px solid var(--glass-border);
   border-bottom: none;
   overflow: hidden;
   animation: slideUp 0.25s ease-out;
@@ -477,11 +480,11 @@
   right: 16px;
   max-width: 400px;
   margin: 0 auto;
-  background: var(--player-bg);
+  background: var(--glass-bg-strong);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border-radius: 14px;
-  border: 1px solid var(--player-border);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--shadow);
   padding: 14px 16px;
   display: none;
@@ -555,11 +558,11 @@
   right: 16px;
   max-width: 400px;
   margin: 0 auto;
-  background: var(--player-bg);
+  background: var(--glass-bg-strong);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border-radius: 12px;
-  border: 1px solid var(--player-border);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--shadow);
   padding: 14px 18px;
   font-size: 14px;
@@ -580,4 +583,30 @@
 
 .toast.error {
   border-color: #ff3b30;
+}
+
+/* Hover states (pointer devices only) */
+@media (hover: hover) {
+  .icon-btn:hover,
+  .segment-btn:hover,
+  .date-nav-btn:hover:not(:disabled),
+  .secondary-btn:hover,
+  .date-picker-btn:hover,
+  .sleep-option:hover,
+  .fav-item:hover {
+    background: var(--control-hover);
+  }
+
+  .ctrl-btn:hover {
+    background: var(--control-hover);
+  }
+
+  .play-btn:hover {
+    background: var(--glass-bg-strong);
+    transform: scale(1.04);
+  }
+
+  .fav-item-del:hover {
+    color: #ff3b30;
+  }
 }

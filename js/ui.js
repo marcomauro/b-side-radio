@@ -36,6 +36,7 @@ export function initUI() {
     sleepIcon: document.getElementById('sleepIcon'),
     sleepCountdown: document.getElementById('sleepCountdown'),
     volumeNavBtn: document.getElementById('volumeNavBtn'),
+    randomBtn: document.getElementById('randomBtn'),
     volumeIcon: document.getElementById('volumeIcon'),
     themeBtn: document.getElementById('themeBtn'),
     themeIcon: document.getElementById('themeIcon'),

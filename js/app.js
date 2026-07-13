@@ -8,6 +8,7 @@ import { initPositionTracking, initLifecycleManagement, initAudioEvents, updateP
 import { initTheme } from './theme.js';
 import { initFavorites, updateFav } from './favorites.js';
 import { initSleep } from './sleep.js';
+import { initRandom } from './random.js';
 import { initMediaSession, updateMediaSession } from './mediasession.js';
 import { initInstall, registerServiceWorker } from './install.js';
 import { initInfo } from './info.js';
@@ -38,6 +39,7 @@ function init() {
   initTheme();
   initFavorites();
   initSleep();
+  initRandom();
   initMediaSession();
   initInstall();
   initInfo();

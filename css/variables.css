@@ -1,32 +1,53 @@
 /* ============================================
-   B-SIDE - CSS Variables (Temi Light/Dark)
+   B-SIDE - CSS Variables (Light/Dark Themes)
+   Glassmorphism design tokens
    ============================================ */
 
 :root {
-  --bg-main: #f5f5f7;
-  --player-bg: rgba(255, 255, 255, 0.85);
-  --player-border: rgba(0, 0, 0, 0.06);
-  --text-primary: #1d1d1f;
-  --text-secondary: #86868b;
-  --accent: #007aff;
-  --progress-bg: rgba(0, 0, 0, 0.08);
-  --progress-fill: #1d1d1f;
-  --control-hover: rgba(0, 0, 0, 0.05);
-  --shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-  --blur: saturate(180%) blur(20px);
+  /* Background: soft aurora gradient behind the glass */
+  --bg-main: #e6eaf7;
+  --bg-image:
+    radial-gradient(at 15% 20%, rgba(99, 102, 241, 0.28), transparent 55%),
+    radial-gradient(at 85% 12%, rgba(236, 72, 153, 0.22), transparent 50%),
+    radial-gradient(at 70% 88%, rgba(45, 212, 191, 0.25), transparent 55%),
+    linear-gradient(160deg, #eef1fb 0%, #dde3f4 100%);
+
+  /* Glass surfaces */
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-bg-strong: rgba(255, 255, 255, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --control-glass: rgba(255, 255, 255, 0.35);
+
+  --text-primary: #1d1d2b;
+  --text-secondary: rgba(60, 60, 82, 0.65);
+  --accent: #6366f1;
+  --progress-bg: rgba(30, 30, 60, 0.12);
+  --progress-fill: linear-gradient(90deg, #6366f1, #a855f7);
+  --control-hover: rgba(255, 255, 255, 0.55);
+  --shadow: 0 8px 32px rgba(31, 38, 135, 0.18);
+  --blur: blur(24px) saturate(160%);
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
 }
 
 [data-theme="dark"] {
-  --bg-main: #000000;
-  --player-bg: rgba(28, 28, 30, 0.85);
-  --player-border: rgba(255, 255, 255, 0.06);
-  --text-primary: #f5f5f7;
-  --text-secondary: #8e8e93;
-  --accent: #0a84ff;
+  --bg-main: #0b0c14;
+  --bg-image:
+    radial-gradient(at 20% 15%, rgba(88, 101, 242, 0.35), transparent 55%),
+    radial-gradient(at 80% 18%, rgba(168, 85, 247, 0.22), transparent 50%),
+    radial-gradient(at 65% 85%, rgba(45, 212, 191, 0.15), transparent 55%),
+    linear-gradient(160deg, #12131f 0%, #0b0c14 100%);
+
+  --glass-bg: rgba(22, 24, 38, 0.5);
+  --glass-bg-strong: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --control-glass: rgba(255, 255, 255, 0.07);
+
+  --text-primary: #f2f3f7;
+  --text-secondary: rgba(235, 235, 245, 0.55);
+  --accent: #818cf8;
   --progress-bg: rgba(255, 255, 255, 0.12);
-  --progress-fill: #f5f5f7;
-  --control-hover: rgba(255, 255, 255, 0.08);
-  --shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+  --progress-fill: linear-gradient(90deg, #818cf8, #c084fc);
+  --control-hover: rgba(255, 255, 255, 0.1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }

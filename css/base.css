@@ -1,5 +1,5 @@
 /* ============================================
-   B-SIDE - Base Styles (Reset e Globali)
+   B-SIDE - Base Styles (Reset and Globals)
    ============================================ */
 
 * {
@@ -16,7 +16,8 @@ html, body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
-  background: var(--bg-main);
+  background-color: var(--bg-main);
+  background-image: var(--bg-image);
   display: flex;
   justify-content: center;
   align-items: center;

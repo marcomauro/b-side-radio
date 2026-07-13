@@ -142,7 +142,7 @@
   }
 }
 
-/* Desktop e tablet */
+/* Desktop and tablet: floating glass card over the gradient */
 @media (min-width: 500px) and (min-height: 600px) {
   body {
     padding: 24px;
@@ -152,8 +152,8 @@
     max-width: 400px;
     max-height: 680px;
     height: auto;
-    border-radius: 24px;
-    border: 1px solid var(--player-border);
+    border-radius: 28px;
+    border: 1px solid var(--glass-border);
     box-shadow: var(--shadow);
     padding: 24px 28px;
   }
@@ -164,18 +164,18 @@
 
   .popup-content {
     max-width: 400px;
-    border-radius: 16px;
+    border-radius: 20px;
     margin: auto auto 24px;
-    border: 1px solid var(--player-border);
+    border: 1px solid var(--glass-border);
   }
 }
 
 @media (min-width: 768px) {
   .player {
-    max-width: 420px;
+    max-width: 440px;
   }
 
   .artwork {
-    max-width: 280px;
+    max-width: 300px;
   }
 }
