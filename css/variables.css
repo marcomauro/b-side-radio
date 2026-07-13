@@ -13,10 +13,14 @@
     linear-gradient(160deg, #eef1fb 0%, #dde3f4 100%);
 
   /* Glass surfaces */
-  --glass-bg: rgba(255, 255, 255, 0.45);
   --glass-bg-strong: rgba(255, 255, 255, 0.68);
   --glass-border: rgba(255, 255, 255, 0.55);
   --control-glass: rgba(255, 255, 255, 0.35);
+
+  /* Artwork tile (theme-aware) */
+  --artwork-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.4) 100%);
+  --artwork-title: #1d1d2b;
+  --artwork-subtitle: rgba(29, 29, 43, 0.5);
 
   --text-primary: #1d1d2b;
   --text-secondary: rgba(60, 60, 82, 0.65);
@@ -38,10 +42,13 @@
     radial-gradient(at 65% 85%, rgba(45, 212, 191, 0.15), transparent 55%),
     linear-gradient(160deg, #12131f 0%, #0b0c14 100%);
 
-  --glass-bg: rgba(22, 24, 38, 0.5);
   --glass-bg-strong: rgba(255, 255, 255, 0.12);
   --glass-border: rgba(255, 255, 255, 0.12);
   --control-glass: rgba(255, 255, 255, 0.07);
+
+  --artwork-bg: linear-gradient(145deg, #232447 0%, #1a1b38 50%, #101124 100%);
+  --artwork-title: #fff;
+  --artwork-subtitle: rgba(255, 255, 255, 0.5);
 
   --text-primary: #f2f3f7;
   --text-secondary: rgba(235, 235, 245, 0.55);

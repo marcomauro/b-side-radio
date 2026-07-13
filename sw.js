@@ -2,7 +2,7 @@
 // B-SIDE Service Worker v1.0
 // ============================================
 
-const CACHE_NAME = 'bside-cache-v8';
+const CACHE_NAME = 'bside-cache-v9';
 
 // Asset statici da cachare all'installazione
 const STATIC_ASSETS = [

@@ -142,7 +142,7 @@
   }
 }
 
-/* Desktop and tablet: floating glass card over the gradient */
+/* Desktop and tablet: frameless centered column over the gradient */
 @media (min-width: 500px) and (min-height: 600px) {
   body {
     padding: 24px;
@@ -152,14 +152,7 @@
     max-width: 400px;
     max-height: 680px;
     height: auto;
-    border-radius: 28px;
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow);
     padding: 24px 28px;
-  }
-
-  .artwork {
-    max-width: 260px;
   }
 
   .popup-content {
@@ -173,9 +166,5 @@
 @media (min-width: 768px) {
   .player {
     max-width: 440px;
-  }
-
-  .artwork {
-    max-width: 300px;
   }
 }

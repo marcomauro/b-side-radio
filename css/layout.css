@@ -2,13 +2,10 @@
    B-SIDE - Layout (Player e Sezioni)
    ============================================ */
 
-/* Player Container: main glass surface */
+/* Player Container: floats directly on the gradient background */
 .player {
   width: 100%;
   height: 100%;
-  background: var(--glass-bg);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
   display: flex;
   flex-direction: column;
   padding: calc(20px + var(--safe-top)) 24px calc(20px + var(--safe-bottom));
