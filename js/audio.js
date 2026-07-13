@@ -11,6 +11,14 @@ import { updateFav } from './favorites.js';
 import { updateMediaSession, updatePositionState } from './mediasession.js';
 import { showToast } from './toast.js';
 
+// Optional shuffle navigator: when shuffle mode is active it overrides the
+// prev/next day buttons next to the play control. Injected by random.js at
+// init time to keep the dependency one-way (audio.js never imports random.js).
+let shuffleNavigator = null;
+export function setShuffleNavigator(nav) {
+  shuffleNavigator = nav;
+}
+
 /**
  * Inizializza il tracciamento della posizione
  */
@@ -211,15 +219,19 @@ export function initPlayerControls() {
     Engine.audio.currentTime = t;
   });
 
-  // Day navigation
+  // Day navigation (buttons next to the play control).
+  // In shuffle mode these become "previous / next in the shuffle".
   elements.prevDay.addEventListener('click', function() {
+    if (shuffleNavigator && shuffleNavigator.isActive()) { shuffleNavigator.prev(); return; }
     changeDay(-1);
   });
 
   elements.nextDay.addEventListener('click', function() {
+    if (shuffleNavigator && shuffleNavigator.isActive()) { shuffleNavigator.next(); return; }
     changeDay(1);
   });
 
+  // Date-bar arrows: always plain day navigation.
   elements.prevDayNav.addEventListener('click', function() {
     changeDay(-1);
   });

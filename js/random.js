@@ -1,26 +1,30 @@
 // ============================================
-// B-SIDE - Random (Random Episode Playback + Continuous Shuffle)
+// B-SIDE - Random (Shuffle Mode)
 // ============================================
 
-import { Engine } from './engine.js';
+import { Engine, isPlaying } from './engine.js';
 import { RANDOM_RANGE_START, RANDOM_RANGE_END } from './config.js';
 import { formatDate } from './utils.js';
 import { elements, updateNav, updateActiveSegment } from './ui.js';
-import { updatePlayer } from './audio.js';
+import { updatePlayer, setShuffleNavigator } from './audio.js';
 import { updateFav } from './favorites.js';
 import { updateMediaSession } from './mediasession.js';
 import { showToast } from './toast.js';
 
-const LONG_PRESS_MS = 550;          // hold duration that toggles continuous mode
-const MAX_CONSECUTIVE_ERRORS = 5;   // stop the shuffle after this many unavailable episodes in a row
+const MAX_CONSECUTIVE_ERRORS = 5;   // stop shuffle after this many unavailable episodes in a row
+const MAX_HISTORY = 50;             // cap the back-navigation history
 
-// Continuous shuffle state (module-local, no cross-module coupling)
-let continuousMode = false;
-let currentPart = null;   // 1..4: the quarter currently playing after a shuffle jump
+// Shuffle state (module-local, no cross-module coupling)
+let shuffleMode = false;
+let currentPart = null;   // 1..4: the quarter currently playing
 let shuffleDate = null;   // date the shuffle last selected (detects manual episode changes)
 let pendingMetaHandler = null;
-let jumping = false;      // guards against re-entrant jumps during a source swap
+let advancing = false;    // a jump's source is loading; gates auto-advance re-entry
 let errorStreak = 0;
+
+// Back-navigation history of {date, part} entries
+let history = [];
+let historyIndex = -1;
 
 /**
  * Picks a random weekday (Mon-Fri) within the configured date range
@@ -61,7 +65,7 @@ function pickNext() {
  * Registers a one-shot loadedmetadata handler that seeks to the given part.
  * The seek target depends on the episode duration, known only once metadata
  * loads; the existing canplay handler then performs the actual seek + play.
- * Any previously pending handler is removed first to avoid stacking on rapid jumps.
+ * Also clears the `advancing` gate once the new source is ready.
  * @param {number} part - Quarter of the show (1..4)
  */
 function seekToPartOnMeta(part) {
@@ -76,23 +80,34 @@ function seekToPartOnMeta(part) {
     const target = ((part - 1) / 4) * Engine.audio.duration;
     Engine.position.current = target;
     updateActiveSegment(target, Engine.audio.duration);
+    advancing = false;
   };
 
   Engine.audio.addEventListener('loadedmetadata', pendingMetaHandler);
 }
 
 /**
- * Loads a specific random episode + part and starts playback from that quarter
+ * Keeps the "next" button (next to play) enabled in shuffle mode even on
+ * today's date, since it means "next random", not "tomorrow".
+ */
+function keepForwardEnabled() {
+  if (shuffleMode) elements.nextDay.disabled = false;
+}
+
+/**
+ * Loads a specific episode + part and starts playback from that quarter
  * @param {string} date - Date in YYYY-MM-DD format
  * @param {number} part - Quarter of the show (1..4)
  */
 function playRandom(date, part) {
+  advancing = true;
   currentPart = part;
   shuffleDate = date;
 
   elements.datePicker.value = date;
   updatePlayer();
   updateNav();
+  keepForwardEnabled();
   updateFav();
   updateMediaSession();
 
@@ -104,84 +119,155 @@ function playRandom(date, part) {
 }
 
 /**
- * Jumps to the next random episode + part (used by tap, skip and auto-advance)
+ * Jumps forward to a new random episode + part.
+ * Used by the next button, auto-advance at section end, and error skip.
  */
-function jumpNext() {
-  if (jumping) return;
-  jumping = true;
+function forwardRandom() {
+  const next = pickNext();
 
-  const { date, part } = pickNext();
-  playRandom(date, part);
+  // A forward move from a back position discards the abandoned tail
+  if (historyIndex < history.length - 1) {
+    history = history.slice(0, historyIndex + 1);
+  }
+  history.push(next);
+  if (history.length > MAX_HISTORY) history.shift();
+  historyIndex = history.length - 1;
 
-  // Release the guard once the source swap has reset currentTime/duration
-  setTimeout(function() { jumping = false; }, 300);
+  playRandom(next.date, next.part);
 }
 
 /**
- * Enables or disables continuous shuffle mode
- * @param {boolean} on
+ * Restarts the current section from its beginning (in-place seek)
  */
-function setContinuous(on) {
-  if (continuousMode === on) return;
-  continuousMode = on;
-  elements.randomBtn.classList.toggle('shuffle-on', on);
-  showToast(on ? 'Shuffle continuo attivo' : 'Shuffle continuo disattivato');
+function restartCurrentSection() {
+  const audio = Engine.audio;
+  if (!audio.duration || currentPart === null) return;
+  const target = ((currentPart - 1) / 4) * audio.duration;
+  Engine.position.current = target;
+  audio.currentTime = target;
+  updateActiveSegment(target, audio.duration);
 }
 
-// --- Continuous shuffle engine (audio event listeners) ---
+/**
+ * Goes back to the previous entry in history, or restarts the current
+ * section from its beginning when already at the start of history.
+ */
+function goBack() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    const entry = history[historyIndex];
+    playRandom(entry.date, entry.part);
+  } else {
+    restartCurrentSection();
+  }
+}
 
 /**
- * Drives auto-advance at the quarter boundary and lazily deactivates the mode
+ * Enables shuffle mode. If something is already playing, shuffle takes over at
+ * the end of the current section; otherwise it picks and plays immediately.
+ */
+function activateShuffle() {
+  shuffleMode = true;
+  elements.randomBtn.classList.add('shuffle-on');
+  history = [];
+  errorStreak = 0;
+  advancing = false;
+
+  const audio = Engine.audio;
+  if (isPlaying && audio.duration) {
+    // Keep current playback; the boundary/ended engine advances at section end
+    const part = Math.min(4, Math.floor((audio.currentTime / audio.duration) * 4) + 1);
+    currentPart = part;
+    shuffleDate = elements.datePicker.value;
+    history = [{ date: shuffleDate, part: part }];
+    historyIndex = 0;
+    keepForwardEnabled();
+    showToast('Shuffle attivo — parte a fine sezione');
+  } else {
+    historyIndex = -1;
+    showToast('Shuffle attivo');
+    forwardRandom();
+  }
+}
+
+/**
+ * Disables shuffle mode. Playback is left untouched; only the mode ends.
+ */
+function deactivateShuffle() {
+  shuffleMode = false;
+  elements.randomBtn.classList.remove('shuffle-on');
+  history = [];
+  historyIndex = -1;
+  updateNav(); // restore normal day-navigation button states
+  showToast('Shuffle disattivato');
+}
+
+/**
+ * Toggles shuffle mode on/off (the shuffle button click handler)
+ */
+function toggleShuffle() {
+  if (shuffleMode) deactivateShuffle();
+  else activateShuffle();
+}
+
+// --- Shuffle engine (audio event listeners) ---
+
+/**
+ * Drives auto-advance at the section boundary and lazily deactivates the mode
  * when the user has manually switched to a different episode.
  */
 function onTimeUpdate() {
-  if (!continuousMode) return;
+  if (!shuffleMode) return;
 
-  // The user manually changed the episode: leave continuous mode.
+  // The user manually changed the episode: leave shuffle mode.
   if (shuffleDate && elements.datePicker.value !== shuffleDate) {
-    setContinuous(false);
+    deactivateShuffle();
     return;
   }
+
+  // A jump's source is still loading: don't evaluate the boundary yet.
+  if (advancing) return;
 
   const audio = Engine.audio;
   if (!audio.duration || currentPart === null) return;
 
-  // Parts 1-3 jump at their quarter boundary; part 4 is handled by 'ended'.
+  // Parts 1-3 advance at their quarter boundary; part 4 is handled by 'ended'.
   if (currentPart < 4) {
     const boundary = (currentPart / 4) * audio.duration;
     if (audio.currentTime >= boundary) {
-      jumpNext();
+      forwardRandom();
     }
   }
 }
 
 /**
  * When an episode ends naturally (covers part 4, or a missed boundary),
- * continue the shuffle. Runs after audio.js's own 'ended' handler.
+ * advance the shuffle. Runs after audio.js's own 'ended' handler.
  */
 function onEnded() {
-  if (continuousMode && currentPart !== null) {
-    jumpNext();
+  if (shuffleMode && !advancing && currentPart !== null) {
+    forwardRandom();
   }
 }
 
 /**
- * On an unavailable episode during continuous mode, skip to another one,
- * capping consecutive failures to avoid hammering the network.
+ * On an unavailable episode during shuffle, move on to a new one after the
+ * "episode unavailable" warning, capping consecutive failures.
  */
 function onError() {
-  if (!continuousMode) return;
+  if (!shuffleMode) return;
 
   const err = Engine.audio.error;
   if (err && err.code === 4) {
+    advancing = false;
     errorStreak++;
     if (errorStreak >= MAX_CONSECUTIVE_ERRORS) {
-      setContinuous(false);
+      deactivateShuffle();
       showToast('Shuffle interrotto: troppe puntate non disponibili', 'error', 4000);
       errorStreak = 0;
       return;
     }
-    setTimeout(jumpNext, 400);
+    setTimeout(forwardRandom, 400);
   }
 }
 
@@ -193,54 +279,22 @@ function onPlaying() {
 }
 
 /**
- * Initializes the random episode button.
- * Short tap = one-shot random (or skip to next when continuous is active).
- * Long press = toggle continuous shuffle mode.
+ * Initializes shuffle mode.
+ * Tap the shuffle button to toggle the mode on/off. In shuffle mode the
+ * prev/next buttons next to play navigate the shuffle instead of the day.
  */
 export function initRandom() {
-  const btn = elements.randomBtn;
-  let pressTimer = null;
-  let longPressed = false;
+  elements.randomBtn.addEventListener('click', toggleShuffle);
 
-  function startPress(e) {
-    if (e.button && e.button !== 0) return; // primary button / touch only
-    longPressed = false;
-    try { btn.setPointerCapture(e.pointerId); } catch (_) {}
-    pressTimer = setTimeout(function() {
-      pressTimer = null;
-      longPressed = true;
-      setContinuous(!continuousMode);
-    }, LONG_PRESS_MS);
-  }
-
-  function endPress() {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    }
-    if (longPressed) {
-      longPressed = false; // long press already toggled the mode; ignore the tap
-      return;
-    }
-    jumpNext();
-  }
-
-  function cancelPress() {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    }
-    longPressed = false;
-  }
-
-  btn.addEventListener('pointerdown', startPress);
-  btn.addEventListener('pointerup', endPress);
-  btn.addEventListener('pointercancel', cancelPress);
-  btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-  // Self-contained continuous shuffle engine
   Engine.audio.addEventListener('timeupdate', onTimeUpdate);
   Engine.audio.addEventListener('ended', onEnded);
   Engine.audio.addEventListener('error', onError);
   Engine.audio.addEventListener('playing', onPlaying);
+
+  // Let the day buttons next to play drive the shuffle when it is active
+  setShuffleNavigator({
+    isActive: function() { return shuffleMode; },
+    next: forwardRandom,
+    prev: goBack
+  });
 }
