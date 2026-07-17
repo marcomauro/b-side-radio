@@ -67,7 +67,7 @@
   justify-content: center;
   gap: 3px;
   width: min(72vw, 260px);
-  height: 96px;
+  height: clamp(44px, 13vh, 96px);   /* scale with viewport height so short windows don't overflow */
   margin-top: 16px;
   filter: drop-shadow(0 0 7px rgba(45, 212, 191, 0.25));  /* subtle glow for impact */
 }
