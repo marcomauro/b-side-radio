@@ -75,11 +75,14 @@
 .vbar {
   width: 4px;
   height: var(--h);
-  min-height: 4px;
+  min-height: 3px;
   border-radius: 3px;
   background: var(--accent);
   transform-origin: center;
   opacity: 0.9;
+  /* At rest (paused) the bars collapse almost to zero, centered on the axis */
+  transform: scaleY(0.04);
+  transition: transform 0.45s ease;
 }
 
 /* Animate only while audio is actually playing (class toggled from ui.js).
