@@ -4,7 +4,7 @@
 
 // NOTE: must differ from the bside-player cache name. Two service workers that
 // share a cache name on the same device evict each other's assets.
-const CACHE_NAME = 'bsideradio-cache-v1';
+const CACHE_NAME = 'bsideradio-cache-v2';
 
 // Asset statici da cachare all'installazione
 const STATIC_ASSETS = [
