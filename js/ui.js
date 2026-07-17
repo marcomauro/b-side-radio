@@ -54,25 +54,35 @@ export function initUI() {
 }
 
 /**
- * Costruisce il visualizer radiale (una corona di barre generate via JS,
- * per non avere decine di nodi statici nell'HTML). L'animazione è pilotata
- * dalla classe `is-playing` sul body (vedi updatePlayIcon).
+ * Costruisce il waveform: una fila di barre con altezze irregolari (casuali)
+ * su un profilo centrale, generate via JS. A riposo è una figura statica;
+ * ogni barra si anima con ritmo proprio quando `is-playing` è attivo
+ * (classe sul body, vedi updatePlayIcon). Ogni caricamento ha una forma
+ * leggermente diversa, per un effetto organico.
  */
 function buildVisualizer() {
   const viz = document.getElementById('viz');
   if (!viz) return;
 
-  const N = 40;
-  const cx = 100, cy = 100;
-  let bars = '';
+  const N = 46;
+  let html = '';
   for (let i = 0; i < N; i++) {
-    const delay = -((i % 8) * 110);   // staggered so the ring "breathes"
-    bars += '<g transform="rotate(' + (i * (360 / N)) + ' ' + cx + ' ' + cy + ')">' +
-            '<rect class="viz-bar" x="98.9" y="20" width="2.2" height="30" rx="1.1" ' +
-            'style="animation-delay:' + delay + 'ms"></rect></g>';
+    const t = i / (N - 1);
+    // Envelope più alto al centro + rumore casuale = forma irregolare ma bilanciata
+    const env = 0.4 + 0.6 * Math.sin(Math.PI * t);
+    const base = Math.max(0.14, Math.min(1, env * (0.45 + Math.random() * 0.7)));
+    const min = Math.max(0.12, base * (0.3 + Math.random() * 0.3)) / base;
+    const max = Math.min(1.15, (base + (1 - base) * (0.4 + Math.random() * 0.6))) / base;
+    const dur = (560 + Math.random() * 900).toFixed(0);
+    const delay = (Math.random() * -1600).toFixed(0);
+    html += '<span class="vbar" style="' +
+            '--h:' + (base * 100).toFixed(1) + '%;' +
+            '--min:' + min.toFixed(2) + ';' +
+            '--max:' + max.toFixed(2) + ';' +
+            '--d:' + dur + 'ms;' +
+            '--delay:' + delay + 'ms"></span>';
   }
-  viz.innerHTML = '<svg viewBox="0 0 200 200" width="160" height="160">' +
-                  '<g class="viz-ring">' + bars + '</g></svg>';
+  viz.innerHTML = html;
 }
 
 /**

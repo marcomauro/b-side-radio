@@ -58,50 +58,43 @@
   letter-spacing: 3px;
 }
 
-/* Radial sound visualizer: a ring of bars that pulse (and the ring slowly
-   rotates) while audio plays; bars rest short and still when paused.
-   Markup is built in ui.js (buildVisualizer). */
+/* Sound waveform: a row of bars with irregular (random) heights, mirrored
+   around the center axis. A static waveform at rest; each bar comes alive
+   with its own rhythm while audio plays. Markup + randomness in ui.js. */
 .viz {
-  margin-top: 20px;
-  line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: min(72vw, 260px);
+  height: 96px;
+  margin-top: 16px;
+  filter: drop-shadow(0 0 7px rgba(45, 212, 191, 0.25));  /* subtle glow for impact */
 }
 
-.viz svg {
-  display: block;
-  width: 160px;
-  height: 160px;
+.vbar {
+  width: 4px;
+  height: var(--h);
+  min-height: 4px;
+  border-radius: 3px;
+  background: var(--accent);
+  transform-origin: center;
+  opacity: 0.9;
 }
 
-.viz-bar {
-  fill: var(--accent);
-  transform-box: fill-box;
-  transform-origin: 50% 100%;   /* grow outward from the inner end */
-  transform: scaleY(0.3);       /* short at rest */
-  transition: transform 0.3s ease;
+/* Animate only while audio is actually playing (class toggled from ui.js).
+   Per-bar duration/delay (set inline) make the motion irregular + organic. */
+.is-playing .vbar {
+  animation: vbar var(--d) ease-in-out var(--delay) infinite alternate;
 }
 
-/* Animate only while audio is actually playing (class toggled from ui.js) */
-.is-playing .viz-bar {
-  animation: vizBar 1000ms ease-in-out infinite;
-}
-
-.is-playing .viz-ring {
-  animation: vizSpin 18s linear infinite;
-  transform-origin: 100px 100px;
-}
-
-@keyframes vizBar {
-  0%, 100% { transform: scaleY(0.3); }
-  50%      { transform: scaleY(1); }
-}
-
-@keyframes vizSpin {
-  to { transform: rotate(360deg); }
+@keyframes vbar {
+  from { transform: scaleY(var(--min)); }
+  to   { transform: scaleY(var(--max)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .is-playing .viz-bar { animation: none; transform: scaleY(0.6); }
-  .is-playing .viz-ring { animation: none; }
+  .is-playing .vbar { animation: none; }
 }
 
 /* Progress Bar */
