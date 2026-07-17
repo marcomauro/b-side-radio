@@ -43,6 +43,20 @@
     margin-top: 2px;
   }
 
+  /* Compact waveform so it stays inside the artwork column and never
+     overlaps the controls in the short landscape layout */
+  .viz {
+    width: 100%;
+    max-width: 150px;
+    height: 40px;
+    margin-top: 10px;
+    gap: 2px;
+  }
+
+  .vbar {
+    width: 3px;
+  }
+
   .track-info {
     grid-area: info;
     text-align: left;
