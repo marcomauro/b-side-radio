@@ -7,7 +7,6 @@ import { formatTime, formatDate, buildUrl } from './utils.js';
 import { savePositionToStorage, loadPositionFromStorage } from './storage.js';
 import { clearRecoveryTimers, scheduleRecovery, recoverySuccess, executeRecovery } from './network.js';
 import { elements, updatePlayIcon, updateBufferHealth, getProgressDragging, updateNav, updateActiveSegment } from './ui.js';
-import { updateFav } from './favorites.js';
 import { updateMediaSession, updatePositionState } from './mediasession.js';
 import { showToast } from './toast.js';
 
@@ -191,18 +190,6 @@ export function updatePlayer() {
  * Inizializza i controlli del player
  */
 export function initPlayerControls() {
-  // Date picker
-  elements.datePickerBtn.addEventListener('click', function() {
-    elements.datePicker.showPicker();
-  });
-
-  elements.datePicker.addEventListener('change', function() {
-    updatePlayer();
-    updateNav();
-    updateFav();
-    updateMediaSession();
-  });
-
   // Play/Pause
   elements.playBtn.addEventListener('click', handlePlayPause);
 
@@ -219,8 +206,9 @@ export function initPlayerControls() {
     Engine.audio.currentTime = t;
   });
 
-  // Day navigation (buttons next to the play control).
-  // In shuffle mode these become "previous / next in the shuffle".
+  // Transport arrows next to the play control. In the radio these always
+  // navigate the shuffle (prev = history / restart section, next = new random).
+  // changeDay stays only as a fallback should no navigator be registered.
   elements.prevDay.addEventListener('click', function() {
     if (shuffleNavigator && shuffleNavigator.isActive()) { shuffleNavigator.prev(); return; }
     changeDay(-1);
@@ -228,15 +216,6 @@ export function initPlayerControls() {
 
   elements.nextDay.addEventListener('click', function() {
     if (shuffleNavigator && shuffleNavigator.isActive()) { shuffleNavigator.next(); return; }
-    changeDay(1);
-  });
-
-  // Date-bar arrows: always plain day navigation.
-  elements.prevDayNav.addEventListener('click', function() {
-    changeDay(-1);
-  });
-
-  elements.nextDayNav.addEventListener('click', function() {
     changeDay(1);
   });
 }
@@ -328,11 +307,10 @@ function changeDay(delta) {
   d.setDate(d.getDate() + delta);
   const str = d.toISOString().split('T')[0];
 
-  if (str <= elements.datePicker.max) {
+  if (!elements.datePicker.max || str <= elements.datePicker.max) {
     elements.datePicker.value = str;
     updatePlayer();
     updateNav();
-    updateFav();
     updateMediaSession();
   }
 }

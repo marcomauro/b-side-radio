@@ -1,152 +1,161 @@
-# B-SIDE Player
+# B-SIDE Radio
 
-A Progressive Web App (PWA) to listen to the **B-SIDE** podcast by Alessio Bertallot on Radio Capital.
+A Progressive Web App (PWA) that turns the **B-SIDE** podcast by Alessio Bertallot (Radio Capital) into a **non-stop radio**: an endless shuffle across dates and sections of the show.
 
-![B-SIDE Player](icon-192.png)
+![B-SIDE Radio](icon-192.png)
 
-## Features
+## What it is
 
-### Audio Player
-- Stream episodes by date
-- Playback controls: play/pause, -30s, +30s
-- Quick navigation between days with ◀ ▶ arrows
-- Episode segments: jump to each quarter with the 1-2-3-4 buttons
-- Progress bar with elapsed and remaining time
-- Volume control with mute/unmute
-- Toast notifications for playback errors
+B-SIDE Radio is a derivative of the [`bside-player`](https://github.com/marcomauro/bside-player) PWA. Where the player lets you browse and play episodes by date, the radio strips that down to a single idea: **press play and listen forever.** There is no date picker and no episode browsing — the radio picks a random weekday episode and a random quarter of the show, streams from there, and jumps to a new random episode + section when the current one ends.
 
-### Shuffle Mode
-- Tap the shuffle button to toggle an endless, radio-like mode. It picks a random weekday episode (Sep 1, 2025 – Jun 26, 2026, weekends excluded) and a random quarter of the show (1-4), then streams from there; when the section finishes it automatically jumps to a new random episode + part
-- If something is already playing, shuffle takes over at the end of the current section instead of interrupting
-- While shuffle is active, the prev/next buttons next to play navigate the shuffle: **next** jumps to a new random episode + part, **previous** goes back through history (or restarts the current section when at the start)
-- If an episode is unavailable, it warns and automatically moves on to a new pick (stops after several consecutive failures)
-- Shuffle turns off on a second tap, or when you manually pick an episode
-- Date range configured in `js/config.js`
+## How it works
 
-### Favorites
-- Save favorite episodes
-- Quick access from favorites list
-- Persistent across sessions
+- **Shuffle is the default and only mode.** On load the radio pre-selects a random episode + section (paused, ready). The first **play** starts it; from then on it flows continuously.
+- **Continuous flow.** Each episode is split into four quarters. When a quarter (or the whole episode) ends, the radio auto-advances to a fresh random pick and keeps playing.
+- **Transport arrows navigate the shuffle:**
+  - **▶︎ next** — jump to a new random episode + section
+  - **◀︎ previous** — go back through history, or restart the current section when at the start of history
+- **Resilient.** If an episode is unavailable it warns and moves on to a new pick, pausing the radio after several consecutive failures.
+- **Random range** (weekdays only, weekends excluded) is configured in `js/config.js` (`RANDOM_RANGE_START` / `RANDOM_RANGE_END`).
 
-### Sleep Timer
-- Auto-stop after 5, 15, 30, 45, or 60 minutes
-- Real-time countdown display
-- Automatically pauses playback
+### Controls kept
 
-### Connection Management
-- Automatic reconnection on network interruption
-- Retry with exponential backoff
-- Online/offline detection
-- Playback resumes from interruption point
-- Position saved every 5 seconds
+Play/pause · skip −30s / +30s · previous / next (shuffle navigation) · sleep timer · light/dark theme · info · volume.
 
-### PWA
+### Controls removed vs. the player
+
+Date picker · day-by-day navigation bar · favorites · per-section (1-2-3-4) buttons.
+
+## PWA
+
 - Installable on Android, iOS, and desktop
-- Works offline (interface, with offline navigation fallback)
-- Lockscreen and notification controls
+- Works offline (interface shell; audio is always streamed)
+- Lockscreen and notification controls (Media Session API)
 - Bluetooth headphones compatible
-- Custom home screen icon
 
-### Theme
-- Light and dark mode
-- Preference saved automatically and applied before first paint (no flash on load)
-- System theme color adaptation
+## Theme
+
+- Light and dark mode with its own teal/cyan accent (distinct from the player's indigo/purple)
+- Preference saved and applied before first paint (no flash on load)
 
 ## Installation
 
-### On Android smartphone
-1. Open [https://marcomauro.github.io/bside-player/](https://marcomauro.github.io/bside-player/) with Chrome
+### On Android
+1. Open the published URL with Chrome
 2. Tap menu ⋮ → "Add to Home screen"
-3. The app will appear on your home screen with the B-SIDE icon
 
 ### On iOS
 1. Open the site with Safari
 2. Tap Share → "Add to Home Screen"
-3. Confirm installation
 
 ### On desktop
 1. Open the site with Chrome
 2. Click the install icon in the address bar
-3. Confirm installation
+
+## Governance of the shared core
+
+B-SIDE Radio and B-SIDE Player **share git history** (this repo was seeded from `bside-player/main`) and, deliberately, a set of **shared core modules**. The rule keeps future maintenance cheap:
+
+> **Core fixes are born in the player and travel to the radio via cherry-pick — never the other way around.**
+
+```bash
+git remote add player https://github.com/marcomauro/bside-player.git
+git fetch player
+git cherry-pick <sha>   # port a core fix from the player into the radio
+```
+
+### Shared core modules (keep API-stable)
+
+`engine.js` · `audio.js` · `network.js` · `storage.js` · `mediasession.js` · `utils.js` · `config.js`
+
+These are the audio/streaming engine. Do **not** diverge their public API here — if you need to change engine behavior, do it in the player first, then cherry-pick. `storage.js` and `config.js` are kept byte-identical to the player on purpose (they still export favorites/date-range helpers the radio no longer calls, so a port stays a clean cherry-pick).
+
+### Divergence from the player (the radio's own layer)
+
+These files are radio-specific and are expected to differ:
+
+- `random.js` — rewritten: shuffle is the default mode, boots via `startRadio()`, and owns the transport-arrow navigation.
+- `app.js` — no favorites/segment/date wiring; boots the radio after init.
+- `ui.js` — trimmed DOM map; `updateNav`/`updateActiveSegment` are safe no-ops for the removed controls.
+- `index.html`, `manifest.json`, `sw.js`, `css/variables.css` — branding, accent, and the trimmed layout.
+- `favorites.js` — removed.
+
+`audio.js` is core but required a minimal, well-scoped divergence: the `favorites.js` import was dropped and `initPlayerControls` was trimmed to the controls the radio keeps. The **audio pipeline** (event handlers, `updatePlayer`, position tracking, lifecycle, recovery, `handlePlayPause`) is unchanged, so engine cherry-picks touching those regions still apply cleanly.
+
+> **Same-origin note:** both apps are GitHub Pages *project* sites under `marcomauro.github.io`, so they share `localStorage` and must **not** share a Service Worker cache — hence `CACHE_NAME = 'bsideradio-cache-v1'` in `sw.js`, distinct from the player's.
+
+## Shuffle-injection wiring (gotchas)
+
+- `audio.js` exposes `setShuffleNavigator()`; the prev/next arrows defer to it. The dependency is one-way (`audio.js` never imports `random.js`).
+- **Order matters:** `initAudioEvents()` must run before `initRandom()` in `app.js` — the shuffle's `ended`/`error` listeners register after the engine's and rely on that order.
+- An `advancing` guard (cleared on the new source's `loadedmetadata`) prevents a double-jump at the section boundary while the `src` is being swapped.
 
 ## Project Structure
 
 ```
-bside-player/
+b-side-radio/
 ├── index.html          # Main HTML structure
 ├── manifest.json       # PWA manifest
 ├── sw.js               # Service Worker (caching)
 ├── icon-192.png        # Icon 192x192
 ├── icon-512.png        # Icon 512x512
 ├── css/
-│   ├── variables.css   # CSS custom properties (themes)
+│   ├── variables.css   # CSS custom properties (radio accent + themes)
 │   ├── base.css        # Reset and global styles
 │   ├── layout.css      # Player layout structure
 │   ├── components.css  # UI components (buttons, popups, etc.)
 │   └── responsive.css  # Media queries
-└── js/
-    ├── config.js       # Constants and configuration
-    ├── utils.js        # Utility functions
-    ├── engine.js       # Global state management
-    ├── storage.js      # LocalStorage handling
-    ├── network.js      # Network monitoring and recovery
-    ├── audio.js        # Audio events and playback
-    ├── ui.js           # UI interactions
-    ├── theme.js        # Theme management
-    ├── favorites.js    # Favorites system
-    ├── sleep.js        # Sleep timer
-    ├── random.js       # Random episode playback
-    ├── mediasession.js # Media Session API (lockscreen)
-    ├── install.js      # PWA installation and Service Worker registration
-    ├── info.js         # Info popup (version, credits)
-    ├── toast.js        # Toast notifications
-    └── app.js          # App initialization
+├── js/
+│   ├── config.js       # Constants and configuration (shared core)
+│   ├── utils.js        # Utility functions (shared core)
+│   ├── engine.js       # Global state management (shared core)
+│   ├── storage.js      # LocalStorage handling (shared core)
+│   ├── network.js      # Network monitoring and recovery (shared core)
+│   ├── audio.js        # Audio events and playback (shared core)
+│   ├── mediasession.js # Media Session API / lockscreen (shared core)
+│   ├── ui.js           # UI interactions
+│   ├── theme.js        # Theme management
+│   ├── sleep.js        # Sleep timer
+│   ├── random.js       # Shuffle radio engine (default mode)
+│   ├── install.js      # PWA install + Service Worker registration
+│   ├── info.js         # Info popup (version, credits)
+│   ├── toast.js        # Toast notifications
+│   └── app.js          # App initialization
+└── test/
+    └── shuffle-mode-test.mjs  # Playwright headless smoke test
+```
+
+## Local Development
+
+ES6 modules require HTTP, so serve the folder:
+
+```bash
+python3 -m http.server 8000
+# then open http://localhost:8000
+```
+
+### Automated test
+
+A headless Playwright smoke test lives in `test/shuffle-mode-test.mjs`. It serves a synthetic WAV (with HTTP Range → 206 support), disables the Service Worker, and drives the radio through boot, play, next/previous, and the error cap.
+
+```bash
+npm install            # installs playwright (Chromium is provided by the environment)
+node test/shuffle-mode-test.mjs
 ```
 
 ## Technologies
 
-- HTML5 / CSS3 / JavaScript (ES6 Modules) — no build step, no external dependencies, system font stack
-- Media Session API (lockscreen controls)
-- Service Worker (cache and installation)
-- Web App Manifest (PWA)
-- Connection API (network quality detection, where supported)
-
-### Service Worker caching strategies
-
-- **Audio streams**: network-only, never cached (returns a controlled 503 when offline)
-- **Static assets** (HTML, CSS, JS, icons): stale-while-revalidate, same-origin GET requests only
-- **Navigation requests**: fall back to the cached `index.html` app shell when offline
-- Cache is versioned via `CACHE_NAME` in `sw.js`: bump it whenever a static asset changes, otherwise users keep receiving stale files
-
-## Local Development
-
-To test locally, you need a local server (ES6 modules require HTTP):
-
-```bash
-# With Python
-python3 -m http.server 8000
-
-# With Ruby
-ruby -run -ehttpd . -p8000
-```
-
-Then open `http://localhost:8000`
-
-There are no automated tests: verify changes manually in the browser (playback, seeking, day navigation, offline behavior, PWA install).
-
-## Conventions
-
-- Code comments and documentation are written in English
-- App version lives in `js/config.js` (`APP_VERSION`)
+- HTML5 / CSS3 / JavaScript (ES6 Modules) — no build step, no external runtime dependencies
+- Media Session API · Service Worker · Web App Manifest · Connection API
 
 ## Author
 
-Developed by Marco Mauro
+Developed by Marco Mauro, with the support of Claude AI.
 
 ## License
 
-This project is released under the MIT License.
+Released under the MIT License.
 
 ---
 
-🎧 Enjoy listening!
+📻 Non-stop B-SIDE. Press play.

@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#e6eaf7" id="themeColor">
+  <meta name="theme-color" content="#e3f0f4" id="themeColor">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="B-SIDE">
-  <title>B-SIDE</title>
+  <meta name="apple-mobile-web-app-title" content="B-SIDE Radio">
+  <title>B-SIDE Radio</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -21,7 +21,7 @@
     try {
       if (localStorage.getItem('bside-theme') === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
-        document.getElementById('themeColor').content = '#0b0c14';
+        document.getElementById('themeColor').content = '#07131a';
       }
     } catch (e) {}
   </script>
@@ -40,21 +40,15 @@
         <button class="icon-btn" id="infoBtn" title="Info">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         </button>
+      </div>
+      <div class="header-actions">
         <button class="icon-btn" id="themeBtn" title="Tema">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeIcon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         </button>
       </div>
-      <div class="header-actions">
-        <button class="icon-btn fav-btn" id="favBtn" title="Preferito">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        </button>
-        <button class="icon-btn" id="menuBtn" title="Preferiti">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
-      </div>
     </div>
     <div class="artwork-container">
-      <div class="artwork"><span class="artwork-title">B-SIDE</span><span class="artwork-subtitle">RADIO CAPITAL</span></div>
+      <div class="artwork"><span class="artwork-title">B-SIDE</span><span class="artwork-subtitle">RADIO</span></div>
     </div>
     <div class="track-info">
       <div class="track-title" id="episodeDate">--/--/----</div>
@@ -67,31 +61,26 @@
       </div>
       <div class="time-display"><span id="currentTime">0:00</span><span id="remainingTime">-0:00</span></div>
     </div>
-    <div class="segment-controls" id="segmentControls">
-      <button class="segment-btn active" data-segment="0">1</button>
-      <button class="segment-btn" data-segment="1">2</button>
-      <button class="segment-btn" data-segment="2">3</button>
-      <button class="segment-btn" data-segment="3">4</button>
-    </div>
     <div class="controls">
-      <button class="ctrl-btn nav-btn" id="prevDay"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="ctrl-btn nav-btn" id="prevDay" title="Precedente"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
       <button class="ctrl-btn skip-btn" id="skipBack">-30</button>
       <button class="ctrl-btn play-btn" id="playBtn"><svg viewBox="0 0 24 24" id="playIcon"><polygon points="6,4 20,12 6,20"/></svg></button>
       <button class="ctrl-btn skip-btn" id="skipForward">+30</button>
-      <button class="ctrl-btn nav-btn" id="nextDay"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+      <button class="ctrl-btn nav-btn" id="nextDay" title="Prossima casuale"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
     </div>
     <div class="bottom-bar">
-      <div class="date-selector">
-        <button class="date-nav-btn" id="prevDayNav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <div class="date-picker-btn" id="datePickerBtn"><span class="date-display" id="dateDisplay">--/--/----</span><input type="date" id="datePicker"></div>
-        <button class="date-nav-btn" id="nextDayNav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
-      </div>
       <div class="secondary-controls">
-        <button class="secondary-btn" id="randomBtn" title="Puntata casuale"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></button>
         <button class="secondary-btn" id="sleepBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="sleepIcon"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="sleep-countdown" id="sleepCountdown" style="display:none;"></span></button>
         <button class="secondary-btn" id="volumeNavBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="volumeIcon"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg></button>
       </div>
     </div>
+  </div>
+
+  <!-- Engine state (no visual footprint): the audio engine keeps the current
+       episode date here. B-SIDE Radio has no date-picker UI; random.js drives it. -->
+  <div hidden aria-hidden="true">
+    <input type="date" id="datePicker">
+    <span id="dateDisplay"></span>
   </div>
 
   <!-- Popup Overlays -->
@@ -122,20 +111,13 @@
     </div>
   </div>
 
-  <div class="popup-overlay" id="favOverlay">
-    <div class="popup-content">
-      <div class="popup-header"><h3>Preferiti</h3></div>
-      <div class="favorites-content" id="favList"></div>
-    </div>
-  </div>
-
   <div class="popup-overlay" id="infoOverlay">
     <div class="popup-content">
       <div class="popup-header"><h3>Informazioni</h3></div>
       <div class="info-options">
-        <div class="info-item app-title">B-SIDE</div>
+        <div class="info-item app-title">B-SIDE Radio</div>
         <div class="info-item" id="appVersion"></div>
-        <div class="info-item app-desc">Player per il podcast B-SIDE<br>di Alessio Bertallot su Radio Capital</div>
+        <div class="info-item app-desc">Radio non-stop del podcast B-SIDE<br>di Alessio Bertallot su Radio Capital.<br>Shuffle continuo tra date e sezioni.</div>
         <div class="info-item" id="appBuild"></div>
         <div class="info-item">Sviluppato da Marco Mauro<br>con il supporto di Claude AI</div>
       </div>
@@ -147,7 +129,7 @@
 
   <!-- Install Prompt -->
   <div class="install-prompt" id="installPrompt">
-    <p>Installa B-SIDE</p>
+    <p>Installa B-SIDE Radio</p>
     <button class="install-btn" id="installBtn">Installa</button>
     <button class="install-close" id="installClose">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">

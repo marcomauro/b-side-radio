@@ -1,23 +1,31 @@
 // ============================================
-// B-SIDE - Random (Shuffle Mode)
+// B-SIDE Radio - Shuffle (modalità di default)
 // ============================================
+//
+// La radio è SEMPRE in shuffle: al caricamento carica una prima puntata/sezione
+// casuale (in pausa) e da lì scorre in continuazione. Le frecce di transport
+// navigano lo shuffle: avanti = nuova puntata+sezione casuale, indietro =
+// cronologia (o restart della sezione corrente quando si è all'inizio).
+//
+// Dependency injection: audio.js espone setShuffleNavigator() e le frecce
+// prev/next gli deferiscono. initAudioEvents() (in audio.js) DEVE girare prima
+// di initRandom(): i listener 'ended'/'error' qui sotto si registrano dopo
+// quelli del motore audio e dipendono da quell'ordine.
 
-import { Engine, isPlaying } from './engine.js';
+import { Engine } from './engine.js';
 import { RANDOM_RANGE_START, RANDOM_RANGE_END } from './config.js';
 import { formatDate } from './utils.js';
-import { elements, updateNav, updateActiveSegment } from './ui.js';
+import { elements, updateActiveSegment } from './ui.js';
 import { updatePlayer, setShuffleNavigator } from './audio.js';
-import { updateFav } from './favorites.js';
 import { updateMediaSession } from './mediasession.js';
 import { showToast } from './toast.js';
 
-const MAX_CONSECUTIVE_ERRORS = 5;   // stop shuffle after this many unavailable episodes in a row
+const MAX_CONSECUTIVE_ERRORS = 5;   // stop the radio after this many unavailable episodes in a row
 const MAX_HISTORY = 50;             // cap the back-navigation history
 
 // Shuffle state (module-local, no cross-module coupling)
-let shuffleMode = false;
 let currentPart = null;   // 1..4: the quarter currently playing
-let shuffleDate = null;   // date the shuffle last selected (detects manual episode changes)
+let shuffleDate = null;   // date the shuffle last selected
 let pendingMetaHandler = null;
 let advancing = false;    // a jump's source is loading; gates auto-advance re-entry
 let errorStreak = 0;
@@ -87,42 +95,34 @@ function seekToPartOnMeta(part) {
 }
 
 /**
- * Keeps the "next" button (next to play) enabled in shuffle mode even on
- * today's date, since it means "next random", not "tomorrow".
- */
-function keepForwardEnabled() {
-  if (shuffleMode) elements.nextDay.disabled = false;
-}
-
-/**
- * Loads a specific episode + part and starts playback from that quarter
+ * Loads a specific episode + part and seeks playback to that quarter.
  * @param {string} date - Date in YYYY-MM-DD format
  * @param {number} part - Quarter of the show (1..4)
+ * @param {boolean} autoplay - whether to start playing once the source is ready
  */
-function playRandom(date, part) {
+function playRandom(date, part, autoplay) {
   advancing = true;
   currentPart = part;
   shuffleDate = date;
 
   elements.datePicker.value = date;
-  updatePlayer();
-  updateNav();
-  keepForwardEnabled();
-  updateFav();
+  updatePlayer();          // loads the new source (paused, intent reset)
   updateMediaSession();
 
   seekToPartOnMeta(part);
 
-  Engine.intent.shouldBePlaying = true;
+  // updatePlayer() clears the intent; re-arm it only when we want to keep going.
+  if (autoplay) Engine.intent.shouldBePlaying = true;
 
   showToast('Puntata del ' + formatDate(date) + ' · Parte ' + part);
 }
 
 /**
  * Jumps forward to a new random episode + part.
- * Used by the next button, auto-advance at section end, and error skip.
+ * Used by the next arrow, auto-advance at section end, and error skip.
+ * @param {boolean} autoplay - whether to start playing immediately
  */
-function forwardRandom() {
+function forwardRandom(autoplay) {
   const next = pickNext();
 
   // A forward move from a back position discards the abandoned tail
@@ -133,11 +133,12 @@ function forwardRandom() {
   if (history.length > MAX_HISTORY) history.shift();
   historyIndex = history.length - 1;
 
-  playRandom(next.date, next.part);
+  playRandom(next.date, next.part, autoplay);
 }
 
 /**
- * Restarts the current section from its beginning (in-place seek)
+ * Restarts the current section from its beginning (in-place seek).
+ * Leaves the play/pause state untouched.
  */
 function restartCurrentSection() {
   const audio = Engine.audio;
@@ -156,75 +157,18 @@ function goBack() {
   if (historyIndex > 0) {
     historyIndex--;
     const entry = history[historyIndex];
-    playRandom(entry.date, entry.part);
+    playRandom(entry.date, entry.part, true);
   } else {
     restartCurrentSection();
   }
 }
 
-/**
- * Enables shuffle mode. If something is already playing, shuffle takes over at
- * the end of the current section; otherwise it picks and plays immediately.
- */
-function activateShuffle() {
-  shuffleMode = true;
-  elements.randomBtn.classList.add('shuffle-on');
-  history = [];
-  errorStreak = 0;
-  advancing = false;
-
-  const audio = Engine.audio;
-  if (isPlaying && audio.duration) {
-    // Keep current playback; the boundary/ended engine advances at section end
-    const part = Math.min(4, Math.floor((audio.currentTime / audio.duration) * 4) + 1);
-    currentPart = part;
-    shuffleDate = elements.datePicker.value;
-    history = [{ date: shuffleDate, part: part }];
-    historyIndex = 0;
-    keepForwardEnabled();
-    showToast('Shuffle attivo — parte a fine sezione');
-  } else {
-    historyIndex = -1;
-    showToast('Shuffle attivo');
-    forwardRandom();
-  }
-}
-
-/**
- * Disables shuffle mode. Playback is left untouched; only the mode ends.
- */
-function deactivateShuffle() {
-  shuffleMode = false;
-  elements.randomBtn.classList.remove('shuffle-on');
-  history = [];
-  historyIndex = -1;
-  updateNav(); // restore normal day-navigation button states
-  showToast('Shuffle disattivato');
-}
-
-/**
- * Toggles shuffle mode on/off (the shuffle button click handler)
- */
-function toggleShuffle() {
-  if (shuffleMode) deactivateShuffle();
-  else activateShuffle();
-}
-
 // --- Shuffle engine (audio event listeners) ---
 
 /**
- * Drives auto-advance at the section boundary and lazily deactivates the mode
- * when the user has manually switched to a different episode.
+ * Drives auto-advance at the section boundary.
  */
 function onTimeUpdate() {
-  if (!shuffleMode) return;
-
-  // The user manually changed the episode: leave shuffle mode.
-  if (shuffleDate && elements.datePicker.value !== shuffleDate) {
-    deactivateShuffle();
-    return;
-  }
-
   // A jump's source is still loading: don't evaluate the boundary yet.
   if (advancing) return;
 
@@ -235,7 +179,7 @@ function onTimeUpdate() {
   if (currentPart < 4) {
     const boundary = (currentPart / 4) * audio.duration;
     if (audio.currentTime >= boundary) {
-      forwardRandom();
+      forwardRandom(true);
     }
   }
 }
@@ -245,29 +189,27 @@ function onTimeUpdate() {
  * advance the shuffle. Runs after audio.js's own 'ended' handler.
  */
 function onEnded() {
-  if (shuffleMode && !advancing && currentPart !== null) {
-    forwardRandom();
+  if (!advancing && currentPart !== null) {
+    forwardRandom(true);
   }
 }
 
 /**
- * On an unavailable episode during shuffle, move on to a new one after the
- * "episode unavailable" warning, capping consecutive failures.
+ * On an unavailable episode, move on to a new one after the "episode
+ * unavailable" warning, capping consecutive failures.
  */
 function onError() {
-  if (!shuffleMode) return;
-
   const err = Engine.audio.error;
   if (err && err.code === 4) {
     advancing = false;
     errorStreak++;
     if (errorStreak >= MAX_CONSECUTIVE_ERRORS) {
-      deactivateShuffle();
-      showToast('Shuffle interrotto: troppe puntate non disponibili', 'error', 4000);
+      Engine.intent.shouldBePlaying = false;
+      showToast('Radio in pausa: troppe puntate non disponibili', 'error', 4000);
       errorStreak = 0;
       return;
     }
-    setTimeout(forwardRandom, 400);
+    setTimeout(function() { forwardRandom(true); }, 400);
   }
 }
 
@@ -279,22 +221,31 @@ function onPlaying() {
 }
 
 /**
- * Initializes shuffle mode.
- * Tap the shuffle button to toggle the mode on/off. In shuffle mode the
- * prev/next buttons next to play navigate the shuffle instead of the day.
+ * Initializes the shuffle engine: audio listeners + the transport navigator.
+ * Does NOT pick an episode yet — call startRadio() once every module is ready.
  */
 export function initRandom() {
-  elements.randomBtn.addEventListener('click', toggleShuffle);
-
   Engine.audio.addEventListener('timeupdate', onTimeUpdate);
   Engine.audio.addEventListener('ended', onEnded);
   Engine.audio.addEventListener('error', onError);
   Engine.audio.addEventListener('playing', onPlaying);
 
-  // Let the day buttons next to play drive the shuffle when it is active
+  // The transport arrows next to play always drive the shuffle.
   setShuffleNavigator({
-    isActive: function() { return shuffleMode; },
-    next: forwardRandom,
+    isActive: function() { return true; },
+    next: function() { forwardRandom(true); },
     prev: goBack
   });
+}
+
+/**
+ * Boots the radio: picks the first random episode + section and loads it
+ * paused (ready to start on the first play). Call after all modules init.
+ */
+export function startRadio() {
+  history = [];
+  historyIndex = -1;
+  errorStreak = 0;
+  advancing = false;
+  forwardRandom(false);
 }

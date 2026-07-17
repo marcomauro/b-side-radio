@@ -7,12 +7,11 @@
   .player {
     display: grid;
     grid-template-columns: 35% 1fr;
-    grid-template-rows: auto auto auto auto 1fr auto;
+    grid-template-rows: auto auto auto 1fr auto;
     grid-template-areas:
       "header header"
       "artwork info"
       "artwork progress"
-      "artwork segments"
       "artwork controls"
       "bottom bottom";
     padding: calc(8px + var(--safe-top)) 16px calc(8px + var(--safe-bottom));
