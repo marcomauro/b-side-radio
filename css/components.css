@@ -32,36 +32,76 @@
   color: #ff3b30;
 }
 
-/* Artwork: glass tile, theme-aware */
+/* Artwork: frameless, just the wordmark + a minimal equalizer */
 .artwork {
   width: 100%;
   max-width: min(60vw, 230px);
   aspect-ratio: 1;
-  background: var(--artwork-bg);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 24px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  box-shadow: var(--shadow);
 }
 
 .artwork-title {
   color: var(--artwork-title);
-  font-size: clamp(26px, 8vw, 34px);
+  font-size: clamp(30px, 10vw, 44px);
   font-weight: 700;
   letter-spacing: -0.5px;
 }
 
 .artwork-subtitle {
   color: var(--artwork-subtitle);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   margin-top: 6px;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
+}
+
+/* Radial sound visualizer: a ring of bars that pulse (and the ring slowly
+   rotates) while audio plays; bars rest short and still when paused.
+   Markup is built in ui.js (buildVisualizer). */
+.viz {
+  margin-top: 20px;
+  line-height: 0;
+}
+
+.viz svg {
+  display: block;
+  width: 160px;
+  height: 160px;
+}
+
+.viz-bar {
+  fill: var(--accent);
+  transform-box: fill-box;
+  transform-origin: 50% 100%;   /* grow outward from the inner end */
+  transform: scaleY(0.3);       /* short at rest */
+  transition: transform 0.3s ease;
+}
+
+/* Animate only while audio is actually playing (class toggled from ui.js) */
+.is-playing .viz-bar {
+  animation: vizBar 1000ms ease-in-out infinite;
+}
+
+.is-playing .viz-ring {
+  animation: vizSpin 18s linear infinite;
+  transform-origin: 100px 100px;
+}
+
+@keyframes vizBar {
+  0%, 100% { transform: scaleY(0.3); }
+  50%      { transform: scaleY(1); }
+}
+
+@keyframes vizSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-playing .viz-bar { animation: none; transform: scaleY(0.6); }
+  .is-playing .viz-ring { animation: none; }
 }
 
 /* Progress Bar */

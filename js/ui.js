@@ -49,6 +49,30 @@ export function initUI() {
 
   // Collega audio all'Engine
   Engine.audio = elements.audio;
+
+  buildVisualizer();
+}
+
+/**
+ * Costruisce il visualizer radiale (una corona di barre generate via JS,
+ * per non avere decine di nodi statici nell'HTML). L'animazione è pilotata
+ * dalla classe `is-playing` sul body (vedi updatePlayIcon).
+ */
+function buildVisualizer() {
+  const viz = document.getElementById('viz');
+  if (!viz) return;
+
+  const N = 40;
+  const cx = 100, cy = 100;
+  let bars = '';
+  for (let i = 0; i < N; i++) {
+    const delay = -((i % 8) * 110);   // staggered so the ring "breathes"
+    bars += '<g transform="rotate(' + (i * (360 / N)) + ' ' + cx + ' ' + cy + ')">' +
+            '<rect class="viz-bar" x="98.9" y="20" width="2.2" height="30" rx="1.1" ' +
+            'style="animation-delay:' + delay + 'ms"></rect></g>';
+  }
+  viz.innerHTML = '<svg viewBox="0 0 200 200" width="160" height="160">' +
+                  '<g class="viz-ring">' + bars + '</g></svg>';
 }
 
 /**
@@ -61,6 +85,9 @@ export function updatePlayIcon(playing) {
   elements.playIcon.innerHTML = playing
     ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
     : '<polygon points="6,4 20,12 6,20"/>';
+
+  // Drive the minimal equalizer animation only while audio is playing
+  document.body.classList.toggle('is-playing', playing);
 }
 
 /**
