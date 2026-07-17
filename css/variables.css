@@ -4,13 +4,13 @@
    ============================================ */
 
 :root {
-  /* Background: soft aurora gradient behind the glass */
-  --bg-main: #e6eaf7;
+  /* Background: soft aurora gradient behind the glass (radio: teal/cyan "on air") */
+  --bg-main: #e3f0f4;
   --bg-image:
-    radial-gradient(at 15% 20%, rgba(99, 102, 241, 0.28), transparent 55%),
-    radial-gradient(at 85% 12%, rgba(236, 72, 153, 0.22), transparent 50%),
-    radial-gradient(at 70% 88%, rgba(45, 212, 191, 0.25), transparent 55%),
-    linear-gradient(160deg, #eef1fb 0%, #dde3f4 100%);
+    radial-gradient(at 15% 20%, rgba(20, 184, 166, 0.28), transparent 55%),
+    radial-gradient(at 85% 12%, rgba(56, 189, 248, 0.22), transparent 50%),
+    radial-gradient(at 70% 88%, rgba(139, 92, 246, 0.20), transparent 55%),
+    linear-gradient(160deg, #e9f6f4 0%, #d5e8ec 100%);
 
   /* Glass surfaces */
   --glass-bg-strong: rgba(255, 255, 255, 0.68);
@@ -24,9 +24,9 @@
 
   --text-primary: #1d1d2b;
   --text-secondary: rgba(60, 60, 82, 0.65);
-  --accent: #6366f1;
+  --accent: #14b8a6;
   --progress-bg: rgba(30, 30, 60, 0.12);
-  --progress-fill: linear-gradient(90deg, #6366f1, #a855f7);
+  --progress-fill: linear-gradient(90deg, #14b8a6, #22d3ee);
   --control-hover: rgba(255, 255, 255, 0.55);
   --shadow: 0 8px 32px rgba(31, 38, 135, 0.18);
   --blur: blur(24px) saturate(160%);
@@ -35,26 +35,26 @@
 }
 
 [data-theme="dark"] {
-  --bg-main: #0b0c14;
+  --bg-main: #07131a;
   --bg-image:
-    radial-gradient(at 20% 15%, rgba(88, 101, 242, 0.35), transparent 55%),
-    radial-gradient(at 80% 18%, rgba(168, 85, 247, 0.22), transparent 50%),
-    radial-gradient(at 65% 85%, rgba(45, 212, 191, 0.15), transparent 55%),
-    linear-gradient(160deg, #12131f 0%, #0b0c14 100%);
+    radial-gradient(at 20% 15%, rgba(20, 184, 166, 0.32), transparent 55%),
+    radial-gradient(at 80% 18%, rgba(56, 189, 248, 0.20), transparent 50%),
+    radial-gradient(at 65% 85%, rgba(139, 92, 247, 0.15), transparent 55%),
+    linear-gradient(160deg, #0c1a20 0%, #07131a 100%);
 
   --glass-bg-strong: rgba(255, 255, 255, 0.12);
   --glass-border: rgba(255, 255, 255, 0.12);
   --control-glass: rgba(255, 255, 255, 0.07);
 
-  --artwork-bg: linear-gradient(145deg, #232447 0%, #1a1b38 50%, #101124 100%);
+  --artwork-bg: linear-gradient(145deg, #123a3c 0%, #0f2a30 50%, #0a1c22 100%);
   --artwork-title: #fff;
   --artwork-subtitle: rgba(255, 255, 255, 0.5);
 
   --text-primary: #f2f3f7;
   --text-secondary: rgba(235, 235, 245, 0.55);
-  --accent: #818cf8;
+  --accent: #2dd4bf;
   --progress-bg: rgba(255, 255, 255, 0.12);
-  --progress-fill: linear-gradient(90deg, #818cf8, #c084fc);
+  --progress-fill: linear-gradient(90deg, #2dd4bf, #38bdf8);
   --control-hover: rgba(255, 255, 255, 0.1);
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }

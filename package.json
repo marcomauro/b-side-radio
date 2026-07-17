@@ -1,0 +1,14 @@
+{
+  "name": "b-side-radio",
+  "version": "1.0.0",
+  "description": "B-SIDE Radio — non-stop shuffle PWA for the B-SIDE podcast",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test/shuffle-mode-test.mjs",
+    "serve": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

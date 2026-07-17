@@ -1,15 +1,14 @@
 // ============================================
-// B-SIDE - App (Inizializzazione e Orchestrazione)
+// B-SIDE Radio - App (Inizializzazione e Orchestrazione)
 // ============================================
 
-import { initUI, elements, initProgressBar, initVolumeControl, updateVolIcon, updateNav, initSegmentControls } from './ui.js';
+import { initUI, elements, initProgressBar, initVolumeControl, updateVolIcon, updateNav } from './ui.js';
 import { initNetworkMonitoring } from './network.js';
-import { initPositionTracking, initLifecycleManagement, initAudioEvents, updatePlayer, initPlayerControls } from './audio.js';
+import { initPositionTracking, initLifecycleManagement, initAudioEvents, initPlayerControls } from './audio.js';
 import { initTheme } from './theme.js';
-import { initFavorites, updateFav } from './favorites.js';
 import { initSleep } from './sleep.js';
-import { initRandom } from './random.js';
-import { initMediaSession, updateMediaSession } from './mediasession.js';
+import { initRandom, startRadio } from './random.js';
+import { initMediaSession } from './mediasession.js';
 import { initInstall, registerServiceWorker } from './install.js';
 import { initInfo } from './info.js';
 import { initToast } from './toast.js';
@@ -22,22 +21,22 @@ function init() {
   // Inizializza riferimenti DOM
   initUI();
 
-  // Imposta data corrente
+  // Data di partenza di default (stato interno; lo shuffle la sovrascrive subito)
   const today = new Date();
   elements.datePicker.value = today.toISOString().split('T')[0];
-  elements.datePicker.max = elements.datePicker.value;
 
-  // Inizializza tutti i moduli
+  // Inizializza tutti i moduli.
+  // NB: initAudioEvents() deve girare PRIMA di initRandom(): i listener
+  // 'ended'/'error' dello shuffle si registrano dopo quelli del motore audio
+  // e dipendono da quell'ordine.
   initNetworkMonitoring();
   initPositionTracking();
   initLifecycleManagement();
   initAudioEvents();
   initPlayerControls();
   initProgressBar();
-  initSegmentControls();
   initVolumeControl();
   initTheme();
-  initFavorites();
   initSleep();
   initRandom();
   initMediaSession();
@@ -45,12 +44,9 @@ function init() {
   initInfo();
   initToast();
 
-  // Aggiorna stato iniziale
-  updatePlayer();
+  // Stato iniziale dei controlli
   updateNav();
-  updateFav();
   updateVolIcon();
-  updateMediaSession();
 
   // Imposta volume iniziale
   elements.volumeFill.style.width = (elements.audio.volume * 100) + '%';
@@ -60,6 +56,10 @@ function init() {
 
   // Registra Service Worker
   registerServiceWorker();
+
+  // La radio è in shuffle per default: carica subito una prima puntata/sezione
+  // casuale (in pausa, pronta a partire al primo play).
+  startRadio();
 }
 
 // Avvia l'applicazione

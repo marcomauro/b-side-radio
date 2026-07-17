@@ -1,8 +1,10 @@
 // ============================================
-// B-SIDE Service Worker v1.0
+// B-SIDE Radio Service Worker v1.0
 // ============================================
 
-const CACHE_NAME = 'bside-cache-v11';
+// NOTE: must differ from the bside-player cache name. Two service workers that
+// share a cache name on the same device evict each other's assets.
+const CACHE_NAME = 'bsideradio-cache-v1';
 
 // Asset statici da cachare all'installazione
 const STATIC_ASSETS = [
@@ -26,7 +28,6 @@ const STATIC_ASSETS = [
   './js/audio.js',
   './js/ui.js',
   './js/theme.js',
-  './js/favorites.js',
   './js/sleep.js',
   './js/random.js',
   './js/mediasession.js',
@@ -201,7 +202,7 @@ self.addEventListener('push', (event) => {
   };
   
   event.waitUntil(
-    self.registration.showNotification('B-SIDE', options)
+    self.registration.showNotification('B-SIDE Radio', options)
   );
 });
 
@@ -217,4 +218,4 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-console.log('[SW] Service Worker loaded');
+console.log('[SW] B-SIDE Radio Service Worker loaded');

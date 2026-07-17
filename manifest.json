@@ -1,11 +1,13 @@
 {
-  "name": "B-SIDE - Alessio Bertallot",
-  "short_name": "B-SIDE",
-  "description": "Player podcast B-SIDE di Alessio Bertallot",
-  "start_url": ".",
+  "name": "B-SIDE Radio",
+  "short_name": "Radio",
+  "id": "/b-side-radio/",
+  "description": "Radio non-stop del podcast B-SIDE di Alessio Bertallot: shuffle continuo tra date e sezioni",
+  "start_url": "./?source=pwa",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1a1a1a",
+  "background_color": "#e3f0f4",
+  "theme_color": "#14b8a6",
   "icons": [
     {
       "src": "icon-192.png",

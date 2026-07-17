@@ -14,8 +14,8 @@ export let elements = {};
 export function initUI() {
   elements = {
     audio: document.getElementById('audio'),
+    // datePicker/dateDisplay: hidden engine state (no date-picker UI in the radio)
     datePicker: document.getElementById('datePicker'),
-    datePickerBtn: document.getElementById('datePickerBtn'),
     dateDisplay: document.getElementById('dateDisplay'),
     episodeDate: document.getElementById('episodeDate'),
     progressBar: document.getElementById('progressBar'),
@@ -25,18 +25,15 @@ export function initUI() {
     remainingTime: document.getElementById('remainingTime'),
     playBtn: document.getElementById('playBtn'),
     playIcon: document.getElementById('playIcon'),
+    // prevDay/nextDay: the transport arrows, wired to shuffle navigation
     prevDay: document.getElementById('prevDay'),
     nextDay: document.getElementById('nextDay'),
-    prevDayNav: document.getElementById('prevDayNav'),
-    nextDayNav: document.getElementById('nextDayNav'),
     skipBack: document.getElementById('skipBack'),
     skipForward: document.getElementById('skipForward'),
-    favBtn: document.getElementById('favBtn'),
     sleepBtn: document.getElementById('sleepBtn'),
     sleepIcon: document.getElementById('sleepIcon'),
     sleepCountdown: document.getElementById('sleepCountdown'),
     volumeNavBtn: document.getElementById('volumeNavBtn'),
-    randomBtn: document.getElementById('randomBtn'),
     volumeIcon: document.getElementById('volumeIcon'),
     themeBtn: document.getElementById('themeBtn'),
     themeIcon: document.getElementById('themeIcon'),
@@ -44,14 +41,10 @@ export function initUI() {
     volumeSlider: document.getElementById('volumeSlider'),
     volumeFill: document.getElementById('volumeFill'),
     sleepOverlay: document.getElementById('sleepOverlay'),
-    favOverlay: document.getElementById('favOverlay'),
-    favList: document.getElementById('favList'),
-    menuBtn: document.getElementById('menuBtn'),
     themeColorMeta: document.getElementById('themeColor'),
     installPrompt: document.getElementById('installPrompt'),
     installBtn: document.getElementById('installBtn'),
-    installClose: document.getElementById('installClose'),
-    segmentControls: document.getElementById('segmentControls')
+    installClose: document.getElementById('installClose')
   };
 
   // Collega audio all'Engine
@@ -227,44 +220,21 @@ export function updateVolIcon() {
 }
 
 /**
- * Aggiorna i pulsanti di navigazione data
+ * Aggiorna i pulsanti di navigazione (transport).
+ * Nella radio la freccia "avanti" significa "prossima casuale": mai disabilitata.
  */
 export function updateNav() {
-  const curr = new Date(elements.datePicker.value);
-  const tod = new Date();
-  curr.setHours(0, 0, 0, 0);
-  tod.setHours(0, 0, 0, 0);
-
-  const isToday = curr >= tod;
-  elements.nextDay.disabled = isToday;
-  elements.nextDayNav.disabled = isToday;
+  if (elements.nextDay) elements.nextDay.disabled = false;
+  if (elements.prevDay) elements.prevDay.disabled = false;
 }
 
 /**
- * Inizializza i controlli segmento (4 parti della puntata)
- */
-export function initSegmentControls() {
-  const buttons = elements.segmentControls.querySelectorAll('.segment-btn');
-
-  buttons.forEach(btn => {
-    btn.addEventListener('click', function() {
-      const segment = parseInt(this.dataset.segment);
-      const duration = Engine.audio.duration;
-      if (!duration) return;
-
-      const seekTo = (segment / 4) * duration;
-      Engine.audio.currentTime = seekTo;
-      Engine.position.current = seekTo;
-      updateActiveSegment(seekTo, duration);
-    });
-  });
-}
-
-/**
- * Aggiorna il bottone segmento attivo in base al tempo corrente
+ * Aggiorna il bottone segmento attivo in base al tempo corrente.
+ * La radio non mostra i pulsanti segmento: la funzione resta come no-op
+ * sicuro perché il motore audio (core) la richiama comunque nel timeupdate.
  */
 export function updateActiveSegment(currentTime, duration) {
-  if (!duration) return;
+  if (!elements.segmentControls || !duration) return;
   const buttons = elements.segmentControls.querySelectorAll('.segment-btn');
   const segment = Math.min(3, Math.floor((currentTime / duration) * 4));
 
