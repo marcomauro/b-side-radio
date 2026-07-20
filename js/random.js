@@ -11,9 +11,16 @@
 // prev/next gli deferiscono. initAudioEvents() (in audio.js) DEVE girare prima
 // di initRandom(): i listener 'ended'/'error' qui sotto si registrano dopo
 // quelli del motore audio e dipendono da quell'ordine.
+//
+// Crossfade: con un solo elemento <audio> condiviso da tutti i moduli, la
+// dissolvenza tra un quarto e il successivo è "attraverso il silenzio": si
+// abbassa il volume verso lo 0 avvicinandosi al confine del quarto, si salta
+// alla nuova puntata/sezione e la si fa risalire al volume dell'utente quando
+// parte. Il target del fade-in è il volume impostato dall'utente, catturato
+// all'inizio del fade-out (o al momento del salto, per next/prev manuali).
 
 import { Engine } from './engine.js';
-import { RANDOM_RANGE_START, RANDOM_RANGE_END } from './config.js';
+import { RANDOM_RANGE_START, RANDOM_RANGE_END, CROSSFADE_DURATION } from './config.js';
 import { formatDate } from './utils.js';
 import { elements, updateActiveSegment } from './ui.js';
 import { updatePlayer, setShuffleNavigator } from './audio.js';
@@ -33,6 +40,50 @@ let errorStreak = 0;
 // Back-navigation history of {date, part} entries
 let history = [];
 let historyIndex = -1;
+
+// Crossfade state
+let fadeTimer = null;      // interval handle for the running volume ramp
+let fadeTarget = 1;        // volume to fade back up to (the user's level)
+let fadingOut = false;     // a boundary fade-out is in progress
+let pendingFadeIn = false; // the next 'playing' event should fade the volume in
+
+const CROSSFADE_MS = CROSSFADE_DURATION * 1000;
+
+/**
+ * Cancels any volume ramp currently in flight.
+ */
+function cancelFade() {
+  if (fadeTimer) {
+    clearInterval(fadeTimer);
+    fadeTimer = null;
+  }
+}
+
+/**
+ * Ramps Engine.audio.volume from its current value to `to` over `durationMs`.
+ * @param {number} to - target volume (0..1)
+ * @param {number} durationMs - ramp duration in milliseconds
+ * @param {Function} [onDone] - optional callback once the ramp completes
+ */
+function rampVolume(to, durationMs, onDone) {
+  cancelFade();
+  const audio = Engine.audio;
+  const from = audio.volume;
+  if (durationMs <= 0) {
+    audio.volume = to;
+    if (onDone) onDone();
+    return;
+  }
+  const t0 = performance.now();
+  fadeTimer = setInterval(function() {
+    const p = Math.min(1, (performance.now() - t0) / durationMs);
+    audio.volume = from + (to - from) * p;
+    if (p >= 1) {
+      cancelFade();
+      if (onDone) onDone();
+    }
+  }, 50);
+}
 
 /**
  * Picks a random weekday (Mon-Fri) within the configured date range
@@ -112,7 +163,21 @@ function playRandom(date, part, autoplay) {
   seekToPartOnMeta(part);
 
   // updatePlayer() clears the intent; re-arm it only when we want to keep going.
-  if (autoplay) Engine.intent.shouldBePlaying = true;
+  if (autoplay) {
+    Engine.intent.shouldBePlaying = true;
+
+    // Arm the crossfade-in: start the new source silent and ramp it up once it
+    // begins playing (see onPlaying). If we got here from a boundary fade-out,
+    // fadeTarget already holds the user's volume; on an un-faded jump (manual
+    // next/prev, error skip) capture it now before we zero the element.
+    if (CROSSFADE_MS > 0) {
+      if (!fadingOut) fadeTarget = Engine.audio.volume;
+      cancelFade();
+      Engine.audio.volume = 0;
+      pendingFadeIn = true;
+    }
+  }
+  fadingOut = false;
 
   showToast('Puntata del ' + formatDate(date) + ' · Parte ' + part);
 }
@@ -175,12 +240,24 @@ function onTimeUpdate() {
   const audio = Engine.audio;
   if (!audio.duration || currentPart === null) return;
 
-  // Parts 1-3 advance at their quarter boundary; part 4 is handled by 'ended'.
-  if (currentPart < 4) {
-    const boundary = (currentPart / 4) * audio.duration;
-    if (audio.currentTime >= boundary) {
-      forwardRandom(true);
+  const boundary = (currentPart / 4) * audio.duration;
+
+  // Fade the volume out as we approach the quarter boundary (all parts). For
+  // parts 1-3 the jump happens right at the boundary; for part 4 the fade runs
+  // in the tail and the natural 'ended' event drives the advance.
+  if (CROSSFADE_MS > 0 && !fadingOut) {
+    const fadeStart = boundary - CROSSFADE_DURATION;
+    if (audio.currentTime >= fadeStart && audio.currentTime < boundary) {
+      fadingOut = true;
+      fadeTarget = audio.volume;
+      const remainingMs = Math.max(50, (boundary - audio.currentTime) * 1000);
+      rampVolume(0, remainingMs);
     }
+  }
+
+  // Parts 1-3 advance at their quarter boundary; part 4 is handled by 'ended'.
+  if (currentPart < 4 && audio.currentTime >= boundary) {
+    forwardRandom(true);
   }
 }
 
@@ -205,6 +282,10 @@ function onError() {
     errorStreak++;
     if (errorStreak >= MAX_CONSECUTIVE_ERRORS) {
       Engine.intent.shouldBePlaying = false;
+      // Undo any armed fade-in so the (now paused) element isn't left muted.
+      cancelFade();
+      pendingFadeIn = false;
+      Engine.audio.volume = fadeTarget;
       showToast('Radio in pausa: troppe puntate non disponibili', 'error', 4000);
       errorStreak = 0;
       return;
@@ -214,10 +295,15 @@ function onError() {
 }
 
 /**
- * Resets the failure counter once playback actually starts.
+ * Resets the failure counter once playback actually starts, and runs the
+ * crossfade-in for a freshly-loaded quarter (armed in playRandom).
  */
 function onPlaying() {
   errorStreak = 0;
+  if (pendingFadeIn) {
+    pendingFadeIn = false;
+    rampVolume(fadeTarget, CROSSFADE_MS);
+  }
 }
 
 /**
