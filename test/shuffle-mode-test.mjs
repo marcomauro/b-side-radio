@@ -230,12 +230,15 @@ async function main() {
 
   // 5) CROSSFADE ------------------------------------------------------------
   console.log('\n[5] Crossfade: volume dips toward 0 then ramps back on a jump');
+  // Let the prior step's fade-in settle, then set a known user volume so the
+  // ramp target is unambiguous.
+  await page.waitForTimeout(3500);
   await page.evaluate(() => { document.getElementById('audio').volume = 1; });
   await page.click('#nextDay'); // manual jump -> new source starts silent, fades in
   const vols = await page.evaluate(async () => {
     const a = document.getElementById('audio');
     const samples = [];
-    for (let i = 0; i < 50; i++) {                 // ~3s window (fade is 2s)
+    for (let i = 0; i < 80; i++) {                 // ~4.8s window (fade is 3s)
       samples.push(a.volume);
       await new Promise((r) => setTimeout(r, 60));
     }

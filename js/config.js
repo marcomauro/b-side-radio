@@ -20,4 +20,4 @@ export const RANDOM_RANGE_END = '2026-06-26';
 // Crossfade duration (seconds) between one quarter and the next: the current
 // section fades its volume out as it reaches the boundary, then the new
 // section fades back in. Set to 0 to disable and restore the hard cut.
-export const CROSSFADE_DURATION = 2;
+export const CROSSFADE_DURATION = 3;

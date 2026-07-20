@@ -60,6 +60,17 @@ function cancelFade() {
 }
 
 /**
+ * True when no fade is running or pending, i.e. Engine.audio.volume currently
+ * reflects the user's chosen level. fadeTarget must only be (re)captured while
+ * settled — reading a mid-ramp volume during rapid transitions would drag the
+ * target toward 0 and eventually mute the radio.
+ * @returns {boolean}
+ */
+function settled() {
+  return !fadeTimer && !pendingFadeIn;
+}
+
+/**
  * Ramps Engine.audio.volume from its current value to `to` over `durationMs`.
  * @param {number} to - target volume (0..1)
  * @param {number} durationMs - ramp duration in milliseconds
@@ -167,11 +178,11 @@ function playRandom(date, part, autoplay) {
     Engine.intent.shouldBePlaying = true;
 
     // Arm the crossfade-in: start the new source silent and ramp it up once it
-    // begins playing (see onPlaying). If we got here from a boundary fade-out,
-    // fadeTarget already holds the user's volume; on an un-faded jump (manual
-    // next/prev, error skip) capture it now before we zero the element.
+    // begins playing (see onPlaying). Capture the user's volume only when
+    // settled; a boundary jump (fade-out running) or a rapid re-jump (fade-in
+    // pending) keeps the target already on record instead of reading ~0.
     if (CROSSFADE_MS > 0) {
-      if (!fadingOut) fadeTarget = Engine.audio.volume;
+      if (settled()) fadeTarget = Engine.audio.volume;
       cancelFade();
       Engine.audio.volume = 0;
       pendingFadeIn = true;
@@ -248,8 +259,8 @@ function onTimeUpdate() {
   if (CROSSFADE_MS > 0 && !fadingOut) {
     const fadeStart = boundary - CROSSFADE_DURATION;
     if (audio.currentTime >= fadeStart && audio.currentTime < boundary) {
+      if (settled()) fadeTarget = audio.volume;
       fadingOut = true;
-      fadeTarget = audio.volume;
       const remainingMs = Math.max(50, (boundary - audio.currentTime) * 1000);
       rampVolume(0, remainingMs);
     }
@@ -333,5 +344,9 @@ export function startRadio() {
   historyIndex = -1;
   errorStreak = 0;
   advancing = false;
+  cancelFade();
+  pendingFadeIn = false;
+  fadingOut = false;
+  fadeTarget = Engine.audio.volume;
   forwardRandom(false);
 }
