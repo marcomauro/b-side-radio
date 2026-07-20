@@ -12,6 +12,7 @@ B-SIDE Radio is a derivative of the [`bside-player`](https://github.com/marcomau
 
 - **Shuffle is the default and only mode.** On load the radio pre-selects a random episode + section (paused, ready). The first **play** starts it; from then on it flows continuously.
 - **Continuous flow.** Each episode is split into four quarters. When a quarter (or the whole episode) ends, the radio auto-advances to a fresh random pick and keeps playing.
+- **Crossfade between sections.** As a quarter reaches its boundary the volume fades down toward silence; the new pick then fades back up to your level, so transitions are smooth rather than a hard cut. Duration is configurable in `js/config.js` (`CROSSFADE_DURATION`, seconds; `0` restores the hard cut).
 - **Transport arrows navigate the shuffle:**
   - **▶︎ next** — jump to a new random episode + section
   - **◀︎ previous** — go back through history, or restart the current section when at the start of history

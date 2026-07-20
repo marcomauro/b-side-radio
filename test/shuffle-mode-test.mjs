@@ -7,7 +7,9 @@
 //   2. play          — the first play starts playback
 //   3. next arrow    — jumps to a NEW random episode+section
 //   4. previous arrow— goes back through history to the previous pick
-//   5. error cap     — after MAX_CONSECUTIVE_ERRORS unavailable episodes the
+//   5. crossfade     — a transition dips the volume toward 0 then ramps it
+//                      back up to the user's level (fade through silence)
+//   6. error cap     — after MAX_CONSECUTIVE_ERRORS unavailable episodes the
 //                      radio pauses with a warning toast
 //
 // Test rig notes (learned the hard way, do not re-discover):
@@ -226,8 +228,29 @@ async function main() {
   const idAfterPrev = toastId(await toastTxt());
   assert(idAfterPrev === idBeforeNext, `previous restored the earlier pick (${idAfterPrev})`);
 
-  // 5) ERROR CAP ------------------------------------------------------------
-  console.log('\n[5] Error cap: unavailable episodes pause the radio');
+  // 5) CROSSFADE ------------------------------------------------------------
+  console.log('\n[5] Crossfade: volume dips toward 0 then ramps back on a jump');
+  // Let the prior step's fade-in settle, then set a known user volume so the
+  // ramp target is unambiguous.
+  await page.waitForTimeout(3500);
+  await page.evaluate(() => { document.getElementById('audio').volume = 1; });
+  await page.click('#nextDay'); // manual jump -> new source starts silent, fades in
+  const vols = await page.evaluate(async () => {
+    const a = document.getElementById('audio');
+    const samples = [];
+    for (let i = 0; i < 80; i++) {                 // ~4.8s window (fade is 3s)
+      samples.push(a.volume);
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    return samples;
+  });
+  const minVol = Math.min(...vols);
+  const endVol = vols[vols.length - 1];
+  assert(minVol < 0.5, `volume dipped during the crossfade (min=${minVol.toFixed(2)})`);
+  assert(endVol > 0.9, `volume ramped back to the user's level (end=${endVol.toFixed(2)})`);
+
+  // 6) ERROR CAP ------------------------------------------------------------
+  console.log('\n[6] Error cap: unavailable episodes pause the radio');
   failAudio = true;
   await page.click('#nextDay'); // triggers a 404 -> cascade of forward retries
   await page.waitForFunction(() => {
