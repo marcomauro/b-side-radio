@@ -178,11 +178,14 @@ function playRandom(date, part, autoplay) {
     Engine.intent.shouldBePlaying = true;
 
     // Arm the crossfade-in: start the new source silent and ramp it up once it
-    // begins playing (see onPlaying). Capture the user's volume only when
-    // settled; a boundary jump (fade-out running) or a rapid re-jump (fade-in
-    // pending) keeps the target already on record instead of reading ~0.
+    // begins playing (see onPlaying). Capture the user's volume only from a
+    // fresh, settled state. NOT during a boundary jump: `fadingOut` means a
+    // fade-out just ran the volume down to ~0, and the ramp's timer may have
+    // already cleared (so settled() would wrongly read that ~0 as the target
+    // and mute the radio). In that case fadeTarget was captured at fade-out
+    // start and is still correct. Also skip while a fade-in is still pending.
     if (CROSSFADE_MS > 0) {
-      if (settled()) fadeTarget = Engine.audio.volume;
+      if (!fadingOut && settled()) fadeTarget = Engine.audio.volume;
       cancelFade();
       Engine.audio.volume = 0;
       pendingFadeIn = true;

@@ -7,9 +7,12 @@
 //   2. play          — the first play starts playback
 //   3. next arrow    — jumps to a NEW random episode+section
 //   4. previous arrow— goes back through history to the previous pick
-//   5. crossfade     — a transition dips the volume toward 0 then ramps it
+//   5. crossfade     — a manual jump dips the volume toward 0 then ramps it
 //                      back up to the user's level (fade through silence)
-//   6. error cap     — after MAX_CONSECUTIVE_ERRORS unavailable episodes the
+//   6. auto crossfade— an automatic section-boundary advance also fades out
+//                      and back IN to full volume (regression: the fade-out
+//                      must not be mistaken for the user's level)
+//   7. error cap     — after MAX_CONSECUTIVE_ERRORS unavailable episodes the
 //                      radio pauses with a warning toast
 //
 // Test rig notes (learned the hard way, do not re-discover):
@@ -249,8 +252,47 @@ async function main() {
   assert(minVol < 0.5, `volume dipped during the crossfade (min=${minVol.toFixed(2)})`);
   assert(endVol > 0.9, `volume ramped back to the user's level (end=${endVol.toFixed(2)})`);
 
-  // 6) ERROR CAP ------------------------------------------------------------
-  console.log('\n[6] Error cap: unavailable episodes pause the radio');
+  // 6) AUTO-ADVANCE CROSSFADE ----------------------------------------------
+  // The real bug lived here, not on the manual jump above: at a section
+  // boundary the volume fades out to ~0, then the next section must fade back
+  // up to the USER's level. A regression captured the fade-out's ~0 as the
+  // target, leaving the radio permanently quiet.
+  console.log('\n[6] Auto-advance crossfade: volume returns to full after a boundary');
+  await page.waitForTimeout(3500);                       // let the prior fade settle
+  await page.evaluate(() => { document.getElementById('audio').volume = 1; });
+  const partNow = await page.evaluate(() => {
+    const m = /Parte (\d)/.exec(document.getElementById('toast').textContent || '');
+    return m ? parseInt(m[1], 10) : 1;
+  });
+  const idBeforeAuto = toastId(await toastTxt());
+  // Seek to just before this section's fade-out window so the boundary advance
+  // fires on its own (no manual next/prev).
+  await page.evaluate((part) => {
+    const a = document.getElementById('audio');
+    a.currentTime = (part / 4) * a.duration - 3.3;
+  }, partNow);
+  await page.waitForFunction(
+    (prev) => {
+      const m = /del (\d{2}\/\d{2}\/\d{4}).+Parte (\d)/.exec(document.getElementById('toast').textContent || '');
+      return m && `${m[1]}#${m[2]}` !== prev;
+    },
+    idBeforeAuto,
+    { timeout: 10000 }
+  );
+  const autoVols = await page.evaluate(async () => {
+    const a = document.getElementById('audio');
+    const samples = [];
+    for (let i = 0; i < 80; i++) {                        // ~4.8s window (fade is 3s)
+      samples.push(a.volume);
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    return samples;
+  });
+  const autoEnd = autoVols[autoVols.length - 1];
+  assert(autoEnd > 0.9, `volume returned to full after an auto-advance (end=${autoEnd.toFixed(2)})`);
+
+  // 7) ERROR CAP ------------------------------------------------------------
+  console.log('\n[7] Error cap: unavailable episodes pause the radio');
   failAudio = true;
   await page.click('#nextDay'); // triggers a 404 -> cascade of forward retries
   await page.waitForFunction(() => {
